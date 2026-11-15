@@ -6,10 +6,10 @@
 
 ## 安装
 
-1. 从本仓库的 **Releases** 下载并解压 `Deadlock-AI-Translator-Go.zip`。
+1. 从本仓库的 **Releases** 下载并解压对应平台的安装包。Windows 使用 `deadlock-translator-windows-amd64.zip`，Linux 使用 `deadlock-translator-linux-amd64.zip`。每个包都包含 `pak23_dir.vpk`。
 2. 启动翻译桥（Windows 和 Linux 均为 x86-64）。
    - Windows 双击 `deadlock-translator.exe`。首次启动时信任 **Deadlock Translator Go Local Root**，然后完全退出并重启 Steam。
-   - Linux 进入 `linux-amd64`，先运行 `./deadlock-translator --init-tls`，让 Steam 信任生成的根证书，再运行 `./deadlock-translator`。
+   - Linux 在解压目录先运行 `./deadlock-translator --init-tls`，让 Steam 信任生成的根证书，再运行 `./deadlock-translator`。
 3. 在设置页选择翻译服务，按服务要求填写 API Key。 [打开本地设置页](http://127.0.0.1:8791/ui)
 4. 用 Mod Manager 安装 `pak23_dir.vpk`，或将它复制到 `Deadlock/game/citadel/addons/`。游玩时保持翻译桥运行。
 
@@ -22,7 +22,11 @@
 ## 构建
 
 - **编译翻译桥**（Go 1.25.12+）运行 `go build -o dist/local/ ./cmd/deadlock-translator`。Windows 可用根目录的 `Start-Go-Bridge.cmd` 启动。
-- **生成完整发布包**（Python 3.9+）按[底包说明](docs/vpk.md)下载上游 VPK，再运行 `python scripts/build_release.py --base-vpk "路径/pak03_dir.vpk"`。Linux 上使用 `python3`，产物位于 `dist/`。
+- **生成平台发布包**（Python 3.9+）按[底包说明](docs/vpk.md)下载上游 VPK，再运行 `python scripts/build_release.py --base-vpk "路径/pak03_dir.vpk"`。Linux 上使用 `python3`，两个 ZIP 均位于 `dist/`。
+
+## 发布
+
+分支推送和 PR 会运行 Windows 和 Linux CI。需要发布时，在目标提交上创建并推送 `v1.2.9` 这类 `vMAJOR.MINOR.PATCH` 格式的 Tag。CI 通过后，GitHub Actions 会按 Tag 的版本打包并发布。
 
 ## 项目目录
 

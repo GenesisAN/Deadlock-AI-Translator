@@ -3,6 +3,7 @@ name: CI and Release
 on:
   push:
     branches: ['**']
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
   pull_request:
 
 permissions:
@@ -27,79 +28,65 @@ jobs:
       - run: go test -mod=readonly ./...
       - run: go vet -mod=readonly ./...
       - run: go build -mod=readonly ./...
-      - name: Test release version selection
+      - name: Test release tag validation
         if: runner.os == 'Linux'
         run: python3 -B -m unittest discover -s scripts
 
   release:
     needs: ci
-    if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+    if: github.event_name == 'push' && github.ref_type == 'tag' && github.event.created
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     concurrency:
-      group: publish-release-${{ github.repository }}
+      group: publish-release-${{ github.ref }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           persist-credentials: false
-      - name: Plan release for current commit
-        id: plan
+      - name: Read release version from tag
+        id: tag
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          tip=$(git ls-remote --exit-code origin "$GITHUB_REF" | cut -f1)
-          if [[ "$tip" != "$GITHUB_SHA" ]]; then
-            echo 'A newer default-branch commit is available.'
-            exit 0
-          fi
-          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
-            | python3 scripts/release_version.py >> "$GITHUB_OUTPUT"
+        run: python3 scripts/release_version.py "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        if: steps.plan.outputs.version != ''
         with:
           go-version-file: go.mod
       - name: Build release assets
-        if: steps.plan.outputs.version != ''
+        shell: bash
         env:
-          VERSION: ${{ steps.plan.outputs.version }}
+          VERSION: ${{ steps.tag.outputs.version }}
         run: |
           base_vpk="$RUNNER_TEMP/babeltower-community-v1.0.1-pak03_dir.vpk"
           curl --fail --silent --show-error --location --retry 3 --max-time 60 \
             --output "$base_vpk" \
             https://github.com/c1375rick/babeltower-community/releases/download/v1.0.1/pak03_dir.vpk
+          commit=$(git rev-parse HEAD)
           python3 scripts/build_release.py --base-vpk "$base_vpk" \
-            --github-repository "$GITHUB_REPOSITORY" --version "$VERSION" --commit "$GITHUB_SHA"
+            --github-repository "$GITHUB_REPOSITORY" --version "$VERSION" --commit "$commit"
           cd dist
           sha256sum --check SHA256SUMS.txt EXECUTABLE-SHA256SUMS.txt
       - name: Publish GitHub Release
-        if: steps.plan.outputs.version != ''
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.plan.outputs.version }}
-          RESUME_DRAFT: ${{ steps.plan.outputs.draft }}
         run: |
-          tip=$(git ls-remote --exit-code origin "$GITHUB_REF" | cut -f1)
-          if [[ "$tip" != "$GITHUB_SHA" ]]; then
-            echo 'A newer default-branch commit will be published instead.'
-            exit 0
+          tag="$GITHUB_REF_NAME"
+          commit=$(git rev-parse HEAD)
+          tag_commit=$(gh api "repos/$GITHUB_REPOSITORY/commits/tags/$tag" --jq .sha)
+          if [[ "$tag_commit" != "$commit" ]]; then
+            echo "Tag $tag points to a different commit than the build." >&2
+            exit 1
           fi
-          tag="v$VERSION"
-          assets=(dist/Deadlock-AI-Translator-Go.zip \
-            dist/deadlock-translator-windows-amd64.zip dist/deadlock-translator-linux-amd64.zip \
+          assets=(dist/deadlock-translator-windows-amd64.zip dist/deadlock-translator-linux-amd64.zip \
             dist/SHA256SUMS.txt dist/EXECUTABLE-SHA256SUMS.txt)
-          if [[ "$RESUME_DRAFT" == true ]]; then
-            draft=$(gh release view "$tag" --json isDraft --jq .isDraft)
+          if draft=$(gh release view "$tag" --json isDraft --jq .isDraft 2>/dev/null); then
             if [[ "$draft" != true ]]; then
-              echo 'This draft has already been published.'
+              echo "Release $tag has already been published."
               exit 0
             fi
             gh release upload "$tag" "${assets[@]}" --clobber
-            gh release edit "$tag" --draft=false --latest
+            gh release edit "$tag" --draft=false
           else
-            gh release create "$tag" "${assets[@]}" --target "$GITHUB_SHA" --title "$tag" --generate-notes --latest
+            gh release create "$tag" "${assets[@]}" --verify-tag --title "$tag" --generate-notes
           fi

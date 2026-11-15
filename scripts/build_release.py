@@ -104,7 +104,7 @@ def main():
     parser.add_argument("--base-vpk", type=Path, default=ROOT / "local/vpk/community-v1.0.1-local.vpk",
                         help="Path to the BabelTower Community v1.0.1 VPK or the previous AI release VPK")
     parser.add_argument("--github-repository", metavar="OWNER/REPO", default="",
-                        help="Build GitHub update support and package release assets")
+                        help="Enable GitHub update support for this repository")
     parser.add_argument("--version", default="", help="Override the embedded version for this release")
     parser.add_argument("--commit", default="", help="Embed the source commit hash")
     args = parser.parse_args()
@@ -129,13 +129,10 @@ def main():
     notices = [(ROOT / name, name, False) for name in LICENSES]
     notices.extend((path, name, False) for path, name in dependency_notices())
     files = [(ROOT / "docs/QUICKSTART.zh-CN.md", "QUICKSTART.zh-CN.md", False), (vpk, vpk.name, False)]
-    files.extend((binary, binary.relative_to(output).as_posix() if unix else binary.name, unix)
-                 for binary, unix in binaries)
-    archives = [package(output / "Deadlock-AI-Translator-Go.zip", files + notices)]
-    if repository:
-        for binary, unix in binaries:
-            archive = output / f"deadlock-translator-{binary.parent.name}.zip"
-            archives.append(package(archive, [(binary, binary.name, unix)] + notices))
+    archives = []
+    for binary, unix in binaries:
+        archive = output / f"deadlock-translator-{binary.parent.name}.zip"
+        archives.append(package(archive, [(binary, binary.name, unix)] + files + notices))
     write_checksums(output, "SHA256SUMS.txt", archives)
     write_checksums(output, "EXECUTABLE-SHA256SUMS.txt", (binary for binary, _ in binaries))
     for archive in archives:

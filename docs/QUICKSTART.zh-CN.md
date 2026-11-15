@@ -21,11 +21,11 @@ Go 桥接终端里的 `[聊天][收]` 和 `[聊天][发]` 分别显示收到和�
 
 ## 更新
 
-Go 桥启动时会在终端显示版本和程序的 SHA-256。本地设置页打开时会自动检查更新，也可以点击「检查更新」重试。发现新版后点击「安装更新」，完成后关闭并重新启动 Go 桥。若发布说明提到游戏 Mod 更新，从 GitHub Releases 下载完整安装包并替换其中的 `pak23_dir.vpk`。
+Go 桥启动时会在终端显示版本和程序的 SHA-256。本地设置页打开时会自动检查更新，也可以点击「检查更新」重试。发现新版后点击「安装更新」，完成后关闭并重新启动 Go 桥。若发布说明提到游戏 Mod 更新，从 GitHub Releases 下载对应平台的安装包，使用其中的 `pak23_dir.vpk` 替换游戏里的旧版。
 
 ## Linux x86-64 / Steam Deck
 
-进入 `linux-amd64` 目录，在终端运行 `./deadlock-translator`，然后打开本地设置页。Linux / Steam Deck 的游戏内接入需要先运行 `./deadlock-translator --init-tls`，并让 Steam 信任生成的根证书。Proton 下的游戏接入待实测。
+在解压目录运行 `./deadlock-translator --init-tls`，让 Steam 信任生成的根证书，再运行 `./deadlock-translator`。打开本地设置页，并用同一目录的 `pak23_dir.vpk` 安装游戏 Mod。Proton 下的游戏接入待实测。
 
 ## 来源和许可证
 
