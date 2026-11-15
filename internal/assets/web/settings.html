@@ -1,0 +1,1882 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Babel Tower</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f7f8fa;
+    --surface: #fff;
+    --ink: #172033;
+    --muted: #596477;
+    --line: #e2e6ed;
+    --control: #bdc6d4;
+    --accent: #2156c4;
+    --accent-hover: #19459f;
+    --good: #176842;
+    --error: #b42318;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 15px/1.5 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  .container { width: min(calc(100% - 48px), 1040px); margin-inline: auto; }
+  .header { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .header-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; padding: 18px 0 14px; }
+  .brand { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.04em; }
+  .language { display: flex; align-items: center; gap: 10px; }
+  .language label { margin: 0; color: var(--muted); }
+  .language select { width: auto; max-width: 45vw; min-height: 36px; padding-block: 4px; }
+  nav { display: flex; gap: 26px; overflow-x: auto; padding-inline: 2px; }
+  nav a {
+    flex: 0 0 auto;
+    display: block;
+    padding: 10px 2px 12px;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  nav a:hover, nav a[aria-current] { color: var(--accent); }
+  nav a[aria-current] { border-color: var(--accent); }
+  main { padding-block: 32px 48px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+  .group {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(0, 3.2fr);
+    gap: 24px;
+    padding: 28px 32px;
+  }
+  .group + .group, .disclosure { border-top: 1px solid var(--line); }
+  h2 { margin: 0; font-size: 19px; line-height: 1.4; font-weight: 650; overflow-wrap: anywhere; }
+  fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+  .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .full { grid-column: 1 / -1; }
+  label { display: block; margin: 0 0 6px; font-size: 14px; font-weight: 600; }
+  input:not([type=checkbox]), select, textarea {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--control);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    padding: 8px 11px;
+    font: inherit;
+  }
+  input[readonly] { color: var(--muted); background: var(--page); }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  textarea { display: block; resize: vertical; }
+  input[type=checkbox] { width: 17px; height: 17px; margin: 0; accent-color: var(--accent); flex: none; }
+  .check { display: flex; align-items: center; gap: 9px; margin: 0; min-height: 28px; cursor: pointer; }
+  .check + .check { margin-top: 6px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button {
+    min-height: 40px;
+    padding: 7px 15px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
+  .secondary { border-color: var(--control); background: var(--surface); color: var(--ink); }
+  .secondary:hover:not(:disabled) { background: var(--page); border-color: var(--muted); }
+  button:disabled { opacity: .55; cursor: default; }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .status, .hint { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+  .status.ok { color: var(--good); }
+  .status.bad { color: var(--error); }
+  p { margin: 8px 0 0; }
+  p:empty { display: none; }
+  .savebar {
+    position: sticky;
+    bottom: 0;
+    padding: 14px 32px;
+    border-top: 1px solid var(--line);
+    border-radius: 0 0 12px 12px;
+    background: var(--surface);
+  }
+  .savebar .status { margin-inline-start: auto; }
+  .disclosure { padding: 0 32px; }
+  .disclosure > summary { padding: 16px 0; }
+  details > summary { cursor: pointer; font-weight: 600; }
+  details > summary:hover { color: var(--accent); }
+  .disclosure > .fields, .disclosure > fieldset { padding-bottom: 20px; }
+  #raw, #previewRequest {
+    font: 13px/1.6 ui-monospace, Consolas, monospace;
+    tab-size: 2;
+  }
+  #raw + .actions { margin-top: 12px; }
+  .tool { padding: 28px 32px; }
+  .tool h2 { margin-bottom: 18px; }
+  .tool .actions { margin-top: 16px; }
+  .preview-direction { margin-bottom: 20px; max-width: 290px; }
+  #previewText, #previewTranslation { min-height: 152px; }
+  #previewTranslation, #previewRequest {
+    display: block;
+    padding: 8px 11px;
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--page);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  #previewRequest, #previewDetails { margin-top: 12px; }
+  .facts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 16px; margin: 0; }
+  .facts dd { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+  .diagnostics { margin-top: 14px; }
+  .diagnostics .facts { margin-top: 8px; }
+  #version { color: var(--muted); }
+  #updates .actions { margin-top: 10px; }
+
+  @media (max-width: 680px) {
+    .container { width: calc(100% - 32px); }
+    main { padding-block: 20px 24px; }
+    .group { grid-template-columns: 1fr; gap: 16px; padding: 20px; }
+    .tool { padding: 20px; }
+    .disclosure, .savebar { padding-inline: 20px; }
+    .preview-fields { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .brand { font-size: 21px; }
+    .language { gap: 6px; }
+    nav { gap: 16px; }
+    .fields { grid-template-columns: 1fr; }
+    .savebar .status { width: 100%; margin: 0; }
+    .savebar .status:empty { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <div class="header-row">
+      <h1 class="brand">Babel Tower</h1>
+      <div class="language">
+        <label for="uiLang" data-i18n="lang_label"></label>
+        <select id="uiLang"></select>
+      </div>
+    </div>
+    <nav>
+      <a href="#settings" data-i18n="nav_settings" aria-current="page"></a>
+      <a href="#translation-preview" data-i18n="nav_preview"></a>
+      <a href="#connection" data-i18n="nav_connection"></a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <div class="panel" id="settings">
+    <form id="settingsForm">
+      <fieldset id="settingsFields">
+        <section class="group">
+          <h2 data-i18n="tr_title" tabindex="-1"></h2>
+          <div class="fields">
+            <div>
+              <label for="provider" data-i18n="tr_provider"></label>
+              <select id="provider"></select>
+            </div>
+            <div id="row-apiKey">
+              <label for="apiKey" data-i18n="tr_key"></label>
+              <input type="password" id="apiKey" autocomplete="off" spellcheck="false">
+            </div>
+            <div id="row-model">
+              <label for="model" data-i18n="tr_model"></label>
+              <input type="text" id="model" spellcheck="false">
+            </div>
+            <div id="row-baseUrl">
+              <label for="baseUrl" data-i18n="tr_baseurl"></label>
+              <input type="text" id="baseUrl" spellcheck="false">
+            </div>
+            <div id="row-region">
+              <label for="region" data-i18n="tr_region"></label>
+              <input type="text" id="region" spellcheck="false">
+            </div>
+            <div id="row-endpoint">
+              <label for="endpoint" data-i18n="tr_endpoint"></label>
+              <input type="text" id="endpoint" spellcheck="false">
+            </div>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2 data-i18n="bh_title"></h2>
+          <div class="fields">
+            <label class="check full"><input type="checkbox" id="uiEnabled"> <span data-i18n="bh_enabled"></span></label>
+            <div>
+              <label for="targetLanguage" data-i18n="tr_targetlang"></label>
+              <select id="targetLanguage"></select>
+            </div>
+            <div>
+              <label for="displayMode" data-i18n="bh_display"></label>
+              <select id="displayMode">
+                <option value="bilingual" data-i18n="bh_display_bilingual"></option>
+                <option value="translation_only" data-i18n="bh_display_only"></option>
+              </select>
+            </div>
+            <div class="full" hidden>
+              <label for="targetLanguageCustom" data-i18n="bh_custom_label"></label>
+              <input type="text" id="targetLanguageCustom" data-i18n-ph="bh_custom_ph" spellcheck="false">
+            </div>
+            <div>
+              <label for="outgoing" data-i18n="bh_outgoing"></label>
+              <select id="outgoing">
+                <option value="off" data-i18n="bh_out_off"></option>
+                <option value="translation" data-i18n="bh_out_translation"></option>
+                <option value="bilingual" data-i18n="bh_out_bilingual"></option>
+              </select>
+            </div>
+            <div>
+              <label for="outgoingTarget" data-i18n="bh_target"></label>
+              <select id="outgoingTarget"></select>
+            </div>
+            <div class="full" hidden>
+              <label for="outgoingTargetCustom" data-i18n="bh_custom_label"></label>
+              <input type="text" id="outgoingTargetCustom" data-i18n-ph="bh_custom_ph" spellcheck="false">
+            </div>
+          </div>
+        </section>
+
+        <details class="disclosure">
+          <summary data-i18n="context_title"></summary>
+          <div class="fields">
+            <div class="full">
+              <label for="translationPrompt" data-i18n="tr_prompt"></label>
+              <textarea id="translationPrompt" rows="3" maxlength="1500" data-i18n-ph="tr_prompt_ph"></textarea>
+            </div>
+            <div class="full">
+              <label for="translationGlossary" data-i18n="tr_glossary"></label>
+              <textarea id="translationGlossary" rows="4" maxlength="5000" spellcheck="false" data-i18n-ph="tr_glossary_ph" aria-describedby="translationGlossaryHint"></textarea>
+              <p class="hint" id="translationGlossaryHint" data-i18n="tr_glossary_hint"></p>
+            </div>
+          </div>
+        </details>
+
+        <details class="disclosure">
+          <summary data-i18n="advanced_title"></summary>
+          <div class="fields">
+            <div>
+              <label for="fallback" data-i18n="tr_fallback"></label>
+              <input type="text" id="fallback" data-i18n-ph="tr_fallback_ph" spellcheck="false">
+            </div>
+            <div>
+              <label for="sourceLanguage" data-i18n="tr_srclang"></label>
+              <input type="text" id="sourceLanguage" placeholder="auto" spellcheck="false">
+            </div>
+            <div>
+              <label for="timeoutMs" data-i18n="tr_timeout"></label>
+              <input type="number" id="timeoutMs" min="100" max="30000">
+            </div>
+            <div>
+              <label for="uiTimeoutMs" data-i18n="bh_ui_timeout"></label>
+              <input type="number" id="uiTimeoutMs" min="100" max="30000">
+            </div>
+            <div class="full">
+              <label class="check"><input type="checkbox" id="translateOwn"> <span data-i18n="tr_own"></span></label>
+              <label class="check"><input type="checkbox" id="force"> <span data-i18n="bh_force"></span></label>
+              <label class="check"><input type="checkbox" id="chatLog"> <span data-i18n="tr_chatlog"></span></label>
+            </div>
+          </div>
+        </details>
+      </fieldset>
+
+      <details class="disclosure">
+        <summary data-i18n="adv_summary"></summary>
+        <fieldset id="rawFields">
+          <label for="raw" data-i18n="adv_label"></label>
+          <textarea id="raw" rows="10" spellcheck="false"></textarea>
+          <div class="actions">
+            <button type="button" class="secondary" id="rawSave" data-i18n="adv_save"></button>
+            <span class="status" id="rawStatus" role="status"></span>
+          </div>
+        </fieldset>
+      </details>
+
+      <div class="actions savebar">
+        <button type="submit" id="save" data-i18n="tr_save"></button>
+        <button type="button" class="secondary" id="reload" data-i18n="tr_reload"></button>
+        <span class="status" id="cfgStatus" role="status"></span>
+      </div>
+    </form>
+  </div>
+
+  <section class="panel tool" id="translation-preview" hidden>
+    <h2 data-i18n="preview_title" tabindex="-1"></h2>
+    <form id="previewForm">
+      <div class="preview-direction">
+        <label for="previewTarget" data-i18n="preview_target"></label>
+        <select id="previewTarget">
+          <option value="en" data-i18n="preview_outgoing"></option>
+          <option value="zh-Hans" data-i18n="preview_incoming"></option>
+        </select>
+      </div>
+      <div class="fields preview-fields">
+        <div>
+          <label for="previewText" data-i18n="preview_text"></label>
+          <textarea id="previewText" rows="5" maxlength="4000" dir="auto" required data-i18n-ph="preview_placeholder"></textarea>
+        </div>
+        <div>
+          <label for="previewTranslation" data-i18n="preview_output"></label>
+          <output id="previewTranslation" dir="auto"></output>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="previewRun" type="submit" data-i18n="preview_run"></button>
+        <button class="secondary" id="previewExample" type="button" data-i18n="preview_example"></button>
+        <button class="secondary" id="previewInspect" type="submit" data-i18n="preview_inspect"></button>
+      </div>
+      <p class="hint" data-i18n="preview_note"></p>
+      <p class="status" id="previewStatus" role="status"></p>
+    </form>
+    <details id="previewDetails" hidden>
+      <summary data-i18n="preview_request"></summary>
+      <pre id="previewRequest"></pre>
+    </details>
+  </section>
+
+  <div class="panel" id="connection" hidden>
+    <section class="group">
+      <h2 data-i18n="health_title" tabindex="-1"></h2>
+      <div>
+        <div class="status" id="gameState" role="status"></div>
+        <details class="diagnostics">
+          <summary data-i18n="diagnostics_title"></summary>
+          <dl class="facts">
+            <dt data-i18n="ch_nav"></dt>
+            <dd id="age-bridgeNav">—</dd>
+            <dt data-i18n="ch_fetch"></dt>
+            <dd id="age-gameFetch">—</dd>
+          </dl>
+        </details>
+      </div>
+    </section>
+    <section class="group">
+      <h2 data-i18n="tr_title"></h2>
+      <div>
+        <div class="actions">
+          <button type="button" class="secondary" id="test" data-i18n="tr_test"></button>
+          <span class="status" id="testStatus" role="status"></span>
+        </div>
+        <p class="status" id="testOut"></p>
+      </div>
+    </section>
+    <section class="group" id="updates">
+      <h2 data-i18n="update_title"></h2>
+      <div>
+        <dl class="facts">
+          <dt data-i18n="current_version"></dt>
+          <dd id="version">—</dd>
+        </dl>
+        <div class="actions" id="updateActions" hidden>
+          <button type="button" class="secondary" id="updateCheck" data-i18n="update_check" disabled></button>
+          <button type="button" id="updateInstall" data-i18n="update_install" hidden></button>
+          <span class="status" id="updateStatus" role="status"></span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var HEALTH_MS = 2000;
+  var STORE_KEY = "babeltower.uiLang";
+
+  // ---------- 语言清单(加语言 = 往 LANGS 加一项 + I18N 加一份字典) ----------
+  var LANGS = [
+    { code: "zh-Hans", label: "简体中文" },
+    { code: "zh-Hant", label: "繁體中文" },
+    { code: "en", label: "English" },
+    { code: "ja", label: "日本語" },
+    { code: "ko", label: "한국어" },
+    { code: "fr", label: "Français" },
+    { code: "de", label: "Deutsch" },
+    { code: "es", label: "Español" },
+    { code: "ru", label: "Русский" },
+    { code: "pt-BR", label: "Português (Brasil)" }
+  ];
+
+  var I18N = {
+    "zh-Hans": {
+      title: "Babel Tower 设置",
+      lang_label: "语言",
+      lang_auto: "自动（跟随游戏）",
+      update_check: "检查更新",
+      update_install: "安装更新",
+      update_installing: "正在下载并安装 v{version}…",
+      update_available: "可安装 v{version}。",
+      update_current: "当前已是最新版本。",
+      update_missing: "GitHub 上暂无适用于此平台的发布包。",
+      update_restart: "已安装 v{version}。请关闭并重新启动 Go 桥。",
+      health_bridge_down: "桥不可达",
+      tr_title: "翻译服务",
+      tr_provider: "服务商",
+      tr_key_unset: "未设置",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint（留空 = 默认）",
+      tr_fallback: "回退服务商（逗号分隔）",
+      tr_fallback_ph: "例如：google, deepl",
+      tr_prompt_ph: "英文用队友常用的短句，保留原文语气。",
+      tr_glossary_ph: "ult = 大招\nShiv = 希弗\nWarp Stone = 传送石",
+      tr_timeout: "桥请求超时（毫秒）",
+      tr_srclang: "默认源语言",
+      tr_own: "翻译自己发的消息",
+      tr_chatlog: "在终端显示聊天原文和译文",
+      tr_test: "测试连接",
+      preview_target: "翻译方向",
+      preview_text: "聊天原文",
+      preview_run: "试译",
+      preview_output: "译文",
+      preview_request: "命中词条与模型请求",
+      preview_sent: "翻译服务商 · {provider}",
+      preview_error: "试译失败 · {err}",
+      preview_terms: "请求中的术语提示",
+      preview_tokens: "本地还原的占位符",
+      preview_system: "系统提示词（system）",
+      preview_user: "请求中的聊天正文",
+      preview_none: "无",
+      st_reading: "读取中…",
+      st_loadfail: "读取失败：{err}",
+      st_saving: "保存中…",
+      st_savefail: "保存失败：{err}",
+      st_testok: "测试通过",
+      st_testfail: "测试失败",
+      test_result: "译文：{t}",
+      test_error: "错误：{e}",
+      bh_display_bilingual: "双语（原文 + 译文）",
+      bh_display_only: "仅译文",
+      bh_out_off: "关闭（发原文）",
+      bh_out_translation: "仅译文",
+      bh_out_bilingual: "双语（原文 | 译文）",
+      bh_custom: "自定义…",
+      bh_custom_ph: "例如 pt-BR",
+      bh_force: "强制翻译（跳过语言检测）",
+      adv_save: "按此 JSON 保存",
+      adv_badjson: "JSON 解析失败：{err}",
+      time_just: "刚刚",
+      time_sec: "{n} 秒前",
+      time_min: "{n} 分钟前",
+      time_hour: "{n} 小时前",
+      time_never: "从未",
+      nav_settings: "设置",
+      nav_preview: "试译",
+      nav_connection: "连接",
+      context_title: "提示词和词库",
+      advanced_title: "更多设置",
+      diagnostics_title: "诊断详情",
+      current_version: "当前版本",
+      health_title: "游戏连接",
+      health_game_on: "游戏连接活跃",
+      health_game_off: "等待游戏活动",
+      health_tls_down: "游戏 HTTPS 未启动",
+      ch_nav: "游戏页面最近加载",
+      ch_fetch: "最近请求",
+      update_title: "软件更新",
+      tr_key: "API Key",
+      tr_key_saved: "已保存，留空保留",
+      tr_save: "保存设置",
+      tr_model: "模型",
+      tr_baseurl: "服务地址",
+      tr_glossary_hint: "每行填写一组 英文 = 简体中文，词条可双向使用。",
+      st_loaded: "已重新读取",
+      st_saved: "设置已保存",
+      st_testing: "正在测试…",
+      bh_title: "游戏内翻译",
+      bh_enabled: "启用聊天翻译",
+      adv_summary: "JSON 配置",
+      adv_label: "配置内容（保留 ******** 即可沿用已保存的密钥）",
+      preview_title: "试译聊天消息",
+      preview_outgoing: "发出 · 英语",
+      preview_incoming: "收到 · 简体中文",
+      preview_inspect: "查看请求",
+      preview_note: "使用已保存的服务商和当前填写的提示词、词库。",
+      preview_local: "来自本地词库",
+      preview_prepared: "发送至 {provider} 的请求预览",
+      update_checking: "正在检查更新…",
+      update_error: "更新失败，请重试。",
+      tr_targetlang: "接收语言",
+      bh_target: "发送语言",
+      bh_custom_label: "自定义语言代码",
+      bh_display: "接收时显示",
+      bh_outgoing: "发送时翻译",
+      tr_reload: "重新读取",
+      tr_prompt: "提示词",
+      tr_glossary: "自定义词库",
+      bh_ui_timeout: "游戏等待超时（毫秒）",
+      preview_placeholder: "输入聊天消息",
+      preview_example: "使用示例",
+      preview_pending: "正在处理…",
+    },
+    "zh-Hant": {
+      title: "Babel Tower 設定",
+      lang_label: "語言",
+      lang_auto: "自動（跟隨遊戲）",
+      health_bridge_down: "橋無法連線",
+      tr_title: "翻譯服務",
+      tr_provider: "服務商",
+      tr_key_unset: "未設定",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint（留空 = 預設）",
+      tr_fallback: "備援服務商（以逗號分隔）",
+      tr_fallback_ph: "例如：google, deepl",
+      tr_timeout: "橋請求逾時（毫秒）",
+      tr_srclang: "預設來源語言",
+      tr_own: "翻譯自己發送的訊息",
+      tr_chatlog: "在終端顯示聊天原文和譯文",
+      tr_reload: "重新讀取",
+      tr_test: "測試連線",
+      st_reading: "讀取中…",
+      st_loadfail: "讀取失敗：{err}",
+      st_saving: "儲存中…",
+      st_savefail: "儲存失敗：{err}",
+      st_testok: "測試通過",
+      st_testfail: "測試失敗",
+      test_result: "譯文：{t}",
+      test_error: "錯誤：{e}",
+      bh_display_bilingual: "雙語（原文 + 譯文）",
+      bh_display_only: "僅譯文",
+      bh_out_off: "關閉（送原文）",
+      bh_out_translation: "僅譯文",
+      bh_out_bilingual: "雙語（原文 | 譯文）",
+      bh_custom: "自訂…",
+      bh_custom_ph: "例如 pt-BR",
+      bh_force: "強制翻譯（略過語言偵測）",
+      bh_ui_timeout: "遊戲端等待逾時（毫秒）",
+      adv_save: "依此 JSON 儲存",
+      adv_badjson: "JSON 解析失敗：{err}",
+      time_just: "剛剛",
+      time_sec: "{n} 秒前",
+      time_min: "{n} 分鐘前",
+      time_hour: "{n} 小時前",
+      time_never: "從未",
+      nav_settings: "設定",
+      nav_preview: "試譯",
+      nav_connection: "連線",
+      context_title: "提示詞和詞庫",
+      advanced_title: "更多設定",
+      diagnostics_title: "診斷詳情",
+      current_version: "目前版本",
+      health_title: "遊戲連線",
+      health_game_on: "遊戲連線活躍",
+      health_game_off: "等待遊戲活動",
+      health_tls_down: "遊戲 HTTPS 未啟動",
+      ch_nav: "遊戲頁面最近載入",
+      ch_fetch: "最近請求",
+      update_title: "軟體更新",
+      tr_key: "API Key",
+      tr_key_saved: "已儲存，留空保留",
+      tr_save: "儲存設定",
+      tr_model: "模型",
+      tr_baseurl: "服務位址",
+      tr_glossary_hint: "每行填寫一組 英文 = 簡體中文，詞條可雙向使用。",
+      st_loaded: "已重新讀取",
+      st_saved: "設定已儲存",
+      st_testing: "正在測試…",
+      bh_title: "遊戲內翻譯",
+      bh_enabled: "啟用聊天翻譯",
+      adv_summary: "JSON 設定",
+      adv_label: "設定內容（保留 ******** 即可沿用已儲存的金鑰）",
+      preview_title: "試譯聊天訊息",
+      preview_outgoing: "送出 · 英語",
+      preview_incoming: "收到 · 簡體中文",
+      preview_inspect: "查看請求",
+      preview_note: "使用已儲存的服務商和目前填寫的提示詞、詞庫。",
+      preview_local: "來自本機詞庫",
+      preview_prepared: "傳送至 {provider} 的請求預覽",
+      tr_targetlang: "接收語言",
+      bh_target: "傳送語言",
+      bh_custom_label: "自訂語言代碼",
+      bh_display: "接收時顯示",
+      bh_outgoing: "傳送時翻譯",
+      tr_prompt: "提示詞",
+      tr_prompt_ph: "使用隊友常用的短句，保留原文語氣。",
+      tr_glossary_ph: "ult = 大招",
+      tr_glossary: "自訂詞庫",
+      preview_placeholder: "輸入聊天訊息",
+      preview_text: "聊天原文",
+      preview_run: "試譯",
+      preview_example: "使用範例",
+      preview_output: "譯文",
+      preview_target: "翻譯方向",
+      preview_pending: "處理中…",
+      preview_request: "詞條與模型請求",
+      preview_sent: "翻譯服務商 · {provider}",
+      preview_error: "試譯失敗 · {err}",
+      preview_terms: "請求中的術語",
+      preview_tokens: "本機還原的預留位置",
+      preview_system: "系統提示詞",
+      preview_user: "請求中的聊天原文",
+      preview_none: "無",
+      update_check: "檢查更新",
+      update_install: "安裝更新",
+      update_checking: "正在檢查更新…",
+      update_installing: "正在安裝 v{version}…",
+      update_current: "目前已是最新版本。",
+      update_available: "可安裝 v{version}。",
+      update_missing: "目前沒有適用於這個平台的版本。",
+      update_restart: "已安裝 v{version}。請重新啟動橋接程式。",
+      update_error: "更新失敗，請重試。",
+    },
+    "en": {
+      title: "Babel Tower Settings",
+      lang_label: "Language",
+      lang_auto: "Auto (follow game)",
+      update_check: "Check for updates",
+      update_install: "Install update",
+      update_installing: "Downloading and installing v{version}…",
+      update_available: "v{version} is available.",
+      update_current: "You're running the latest version.",
+      update_missing: "No release package is available for this platform.",
+      update_restart: "v{version} is installed. Close and relaunch the Go bridge.",
+      health_bridge_down: "bridge unreachable",
+      tr_title: "Translation service",
+      tr_provider: "Provider",
+      tr_key_unset: "not set",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint (empty = default)",
+      tr_fallback: "Fallback providers (comma separated)",
+      tr_fallback_ph: "e.g. google, deepl",
+      tr_prompt: "Translation instructions",
+      tr_prompt_ph: "Keep the original tone and use short, natural callouts in English.",
+      tr_glossary: "Custom Deadlock glossary",
+      tr_glossary_ph: "ult = 大招\nShiv = 希弗\nWarp Stone = 传送石",
+      tr_timeout: "Bridge request timeout (ms)",
+      tr_srclang: "Default source language",
+      tr_targetlang: "Target language (incoming)",
+      tr_own: "Translate my own messages",
+      tr_chatlog: "Show chat and translations in the terminal",
+      tr_reload: "Reload",
+      tr_test: "Test connection",
+      preview_target: "Translation direction",
+      preview_text: "Original chat",
+      preview_placeholder: "Enter a chat message",
+      preview_run: "Translate",
+      preview_example: "Use example",
+      preview_output: "Translation",
+      preview_request: "Matched terms and model request",
+      preview_pending: "Working…",
+      preview_error: "Translation failed · {err}",
+      preview_terms: "Terminology in the request",
+      preview_tokens: "Placeholders restored locally",
+      preview_system: "System prompt",
+      preview_user: "Chat text in the request",
+      preview_none: "None",
+      st_reading: "reading…",
+      st_loadfail: "load failed: {err}",
+      st_saving: "saving…",
+      st_savefail: "save failed: {err}",
+      st_testok: "test passed",
+      st_testfail: "test failed",
+      test_result: "translation: {t}",
+      test_error: "error: {e}",
+      bh_display_bilingual: "Bilingual (original + translation)",
+      bh_display_only: "Translation only",
+      bh_outgoing: "Outgoing translation",
+      bh_out_off: "Off (send original)",
+      bh_out_translation: "Translation only",
+      bh_out_bilingual: "Bilingual (original | translation)",
+      bh_target: "Outgoing target language",
+      bh_custom: "Custom…",
+      bh_custom_label: "Custom target (BCP-47, e.g. pt-BR)",
+      bh_custom_ph: "e.g. pt-BR",
+      bh_force: "Force translate (skip language detection)",
+      bh_ui_timeout: "In-game wait timeout (ms)",
+      adv_save: "Save this JSON",
+      adv_badjson: "invalid JSON: {err}",
+      time_just: "just now",
+      time_sec: "{n}s ago",
+      time_min: "{n}m ago",
+      time_hour: "{n}h ago",
+      time_never: "never",
+      nav_settings: "Settings",
+      nav_preview: "Preview",
+      nav_connection: "Connection",
+      context_title: "Instructions and glossary",
+      advanced_title: "More settings",
+      diagnostics_title: "Diagnostics",
+      current_version: "Current version",
+      health_title: "Game connection",
+      health_game_on: "Game connection active",
+      health_game_off: "Waiting for game activity",
+      health_tls_down: "Game HTTPS unavailable",
+      ch_nav: "Last game page load",
+      ch_fetch: "Last request",
+      update_title: "Software updates",
+      tr_key: "API key",
+      tr_key_saved: "Saved · leave blank to keep",
+      tr_save: "Save settings",
+      tr_model: "Model",
+      tr_baseurl: "Service URL",
+      tr_glossary_hint: "Enter one English = Simplified Chinese pair per line. Pairs work in both directions.",
+      st_loaded: "Settings reloaded",
+      st_saved: "Settings saved",
+      st_testing: "Testing…",
+      bh_title: "In-game translation",
+      bh_enabled: "Enable chat translation",
+      adv_summary: "JSON configuration",
+      adv_label: "Configuration (keep ******** to retain the saved key)",
+      preview_title: "Preview a chat translation",
+      preview_outgoing: "Outgoing · English",
+      preview_incoming: "Incoming · Simplified Chinese",
+      preview_inspect: "View request",
+      preview_note: "Uses the saved provider and the instructions and glossary in the form.",
+      preview_local: "From the local glossary",
+      preview_prepared: "Request preview for {provider}",
+      update_checking: "Checking for updates…",
+      update_error: "Update failed. Try again.",
+      bh_display: "Incoming display",
+      preview_sent: "Translated by {provider}",
+    },
+    "ja": {
+      title: "Babel Tower 設定",
+      lang_label: "言語",
+      lang_auto: "自動（ゲームに追従）",
+      health_bridge_down: "ブリッジに接続できません",
+      tr_title: "翻訳サービス",
+      tr_provider: "プロバイダ",
+      tr_key_unset: "未設定",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint（空欄 = 既定）",
+      tr_fallback: "フォールバック（カンマ区切り）",
+      tr_fallback_ph: "例：google, deepl",
+      tr_timeout: "ブリッジ要求タイムアウト（ms）",
+      tr_srclang: "既定の原文言語",
+      tr_targetlang: "訳文の言語（受信メッセージ）",
+      tr_own: "自分の発言も翻訳する",
+      tr_chatlog: "チャットの原文と翻訳をターミナルに表示",
+      tr_reload: "再読み込み",
+      tr_test: "接続テスト",
+      st_reading: "読み込み中…",
+      st_loadfail: "読み込み失敗：{err}",
+      st_saving: "保存中…",
+      st_savefail: "保存失敗：{err}",
+      st_testok: "テスト成功",
+      st_testfail: "テスト失敗",
+      test_result: "訳文：{t}",
+      test_error: "エラー：{e}",
+      bh_display: "表示モード（受信メッセージ）",
+      bh_display_bilingual: "バイリンガル（原文 + 訳文）",
+      bh_display_only: "訳文のみ",
+      bh_outgoing: "送信前翻訳",
+      bh_out_off: "オフ（原文を送信）",
+      bh_out_translation: "訳文のみ",
+      bh_out_bilingual: "バイリンガル（原文 | 訳文）",
+      bh_target: "送信先の言語",
+      bh_custom: "カスタム…",
+      bh_custom_label: "カスタム言語（BCP-47、例 pt-BR）",
+      bh_custom_ph: "例：pt-BR",
+      bh_force: "強制翻訳（言語判定をスキップ）",
+      bh_ui_timeout: "ゲーム側の待機タイムアウト（ms）",
+      adv_save: "この JSON で保存",
+      adv_badjson: "JSON 解析エラー：{err}",
+      time_just: "たった今",
+      time_sec: "{n} 秒前",
+      time_min: "{n} 分前",
+      time_hour: "{n} 時間前",
+      time_never: "未受信",
+      nav_settings: "設定",
+      nav_preview: "翻訳プレビュー",
+      nav_connection: "接続",
+      context_title: "指示と用語集",
+      advanced_title: "その他の設定",
+      diagnostics_title: "接続の詳細",
+      current_version: "現在のバージョン",
+      health_title: "ゲーム接続",
+      health_game_on: "接続中",
+      health_game_off: "ゲームの応答を待機中",
+      health_tls_down: "ゲーム用 HTTPS が停止中",
+      ch_nav: "ページの最終読み込み",
+      ch_fetch: "最後のリクエスト",
+      update_title: "ソフトウェア更新",
+      tr_key: "API キー",
+      tr_key_saved: "保存済み（空欄で維持）",
+      tr_save: "設定を保存",
+      tr_model: "モデル",
+      tr_baseurl: "サービス URL",
+      tr_glossary_hint: "1 行に「英語 = 簡体字中国語」を 1 組入力します。両方向に使えます。",
+      st_loaded: "設定を再読み込みしました",
+      st_saved: "設定を保存しました",
+      st_testing: "テスト中…",
+      bh_title: "ゲーム内翻訳",
+      bh_enabled: "チャット翻訳を有効にする",
+      adv_summary: "JSON 設定",
+      adv_label: "設定内容（******** のまま保存すると現在のキーを維持）",
+      preview_title: "チャット翻訳を試す",
+      preview_outgoing: "送信 · 英語",
+      preview_incoming: "受信 · 簡体字中国語",
+      preview_inspect: "リクエストを表示",
+      preview_note: "保存済みのサービスと、画面上の指示・用語集を使用します。",
+      preview_local: "ローカル用語集の訳",
+      preview_prepared: "{provider} へのリクエストのプレビュー",
+    },
+    "ko": {
+      title: "Babel Tower 설정",
+      lang_label: "언어",
+      lang_auto: "자동(게임 따르기)",
+      health_bridge_down: "브리지 연결 불가",
+      tr_title: "번역 서비스",
+      tr_provider: "제공자",
+      tr_key_unset: "미설정",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint(비우면 기본값)",
+      tr_fallback: "대체 제공자(쉼표 구분)",
+      tr_fallback_ph: "예: google, deepl",
+      tr_timeout: "브리지 요청 타임아웃(ms)",
+      tr_srclang: "기본 원문 언어",
+      tr_targetlang: "번역 대상 언어(수신 메시지)",
+      tr_own: "내 메시지도 번역",
+      tr_chatlog: "터미널에 채팅 원문과 번역 표시",
+      tr_reload: "다시 읽기",
+      tr_test: "연결 테스트",
+      st_reading: "읽는 중…",
+      st_loadfail: "읽기 실패: {err}",
+      st_saving: "저장 중…",
+      st_savefail: "저장 실패: {err}",
+      st_testok: "테스트 성공",
+      st_testfail: "테스트 실패",
+      test_result: "번역: {t}",
+      test_error: "오류: {e}",
+      bh_display: "표시 모드(수신 메시지)",
+      bh_display_bilingual: "이중 언어(원문 + 번역)",
+      bh_display_only: "번역만",
+      bh_outgoing: "전송 전 번역",
+      bh_out_off: "끄기(원문 전송)",
+      bh_out_translation: "번역만",
+      bh_out_bilingual: "이중 언어(원문 | 번역)",
+      bh_target: "전송 대상 언어",
+      bh_custom: "사용자 지정…",
+      bh_custom_label: "사용자 지정 언어(BCP-47, 예: pt-BR)",
+      bh_custom_ph: "예: pt-BR",
+      bh_force: "강제 번역(언어 감지 건너뛰기)",
+      bh_ui_timeout: "게임 측 대기 타임아웃(ms)",
+      adv_save: "이 JSON 으로 저장",
+      adv_badjson: "JSON 파싱 실패: {err}",
+      time_just: "방금",
+      time_sec: "{n}초 전",
+      time_min: "{n}분 전",
+      time_hour: "{n}시간 전",
+      time_never: "없음",
+      nav_settings: "설정",
+      nav_preview: "번역 미리보기",
+      nav_connection: "연결",
+      context_title: "지침 및 용어집",
+      advanced_title: "추가 설정",
+      diagnostics_title: "진단 정보",
+      current_version: "현재 버전",
+      health_title: "게임 연결",
+      health_game_on: "게임 연결 활성",
+      health_game_off: "게임 활동 대기 중",
+      health_tls_down: "게임 HTTPS 사용 불가",
+      ch_nav: "마지막 페이지 로드",
+      ch_fetch: "마지막 요청",
+      update_title: "소프트웨어 업데이트",
+      tr_key: "API 키",
+      tr_key_saved: "저장됨 · 비우면 유지",
+      tr_save: "설정 저장",
+      tr_model: "모델",
+      tr_baseurl: "서비스 URL",
+      tr_glossary_hint: "한 줄에 영어 = 중국어 간체 한 쌍을 입력하세요. 양방향으로 적용됩니다.",
+      st_loaded: "설정을 다시 불러왔습니다",
+      st_saved: "설정을 저장했습니다",
+      st_testing: "테스트 중…",
+      bh_title: "게임 내 번역",
+      bh_enabled: "채팅 번역 사용",
+      adv_summary: "JSON 설정",
+      adv_label: "설정 내용 (********를 그대로 두면 저장된 키를 유지합니다)",
+      preview_title: "채팅 번역 미리보기",
+      preview_outgoing: "발신 · 영어",
+      preview_incoming: "수신 · 중국어 간체",
+      preview_inspect: "요청 보기",
+      preview_note: "저장된 서비스와 양식의 지침 및 용어집을 사용합니다.",
+      preview_local: "로컬 용어집의 번역",
+      preview_prepared: "{provider} 요청 미리보기",
+    },
+    "fr": {
+      title: "Réglages Babel Tower",
+      lang_label: "Langue",
+      lang_auto: "Auto (suivre le jeu)",
+      health_bridge_down: "pont injoignable",
+      tr_title: "Service de traduction",
+      tr_provider: "Fournisseur",
+      tr_key_unset: "non définie",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint (vide = défaut)",
+      tr_fallback: "Fournisseurs de secours (séparés par des virgules)",
+      tr_fallback_ph: "ex. google, deepl",
+      tr_timeout: "Délai de requête du pont (ms)",
+      tr_srclang: "Langue source par défaut",
+      tr_targetlang: "Langue cible (messages reçus)",
+      tr_own: "Traduire mes propres messages",
+      tr_chatlog: "Afficher le chat et les traductions dans le terminal",
+      tr_reload: "Recharger",
+      tr_test: "Tester la connexion",
+      st_reading: "lecture…",
+      st_loadfail: "échec de lecture : {err}",
+      st_saving: "enregistrement…",
+      st_savefail: "échec de l'enregistrement : {err}",
+      st_testok: "test réussi",
+      st_testfail: "test échoué",
+      test_result: "traduction : {t}",
+      test_error: "erreur : {e}",
+      bh_display: "Mode d'affichage (messages reçus)",
+      bh_display_bilingual: "Bilingue (original + traduction)",
+      bh_display_only: "Traduction seule",
+      bh_outgoing: "Traduction à l'envoi",
+      bh_out_off: "Désactivée (envoyer l'original)",
+      bh_out_translation: "Traduction seule",
+      bh_out_bilingual: "Bilingue (original | traduction)",
+      bh_target: "Langue cible à l'envoi",
+      bh_custom: "Personnalisée…",
+      bh_custom_label: "Cible personnalisée (BCP-47, ex. pt-BR)",
+      bh_custom_ph: "ex. pt-BR",
+      bh_force: "Forcer la traduction (ignorer la détection)",
+      bh_ui_timeout: "Délai d'attente en jeu (ms)",
+      adv_save: "Enregistrer ce JSON",
+      adv_badjson: "JSON invalide : {err}",
+      time_just: "à l'instant",
+      time_sec: "il y a {n} s",
+      time_min: "il y a {n} min",
+      time_hour: "il y a {n} h",
+      time_never: "jamais",
+      nav_settings: "Réglages",
+      nav_preview: "Essai",
+      nav_connection: "Connexion",
+      context_title: "Consignes et glossaire",
+      advanced_title: "Autres réglages",
+      diagnostics_title: "Diagnostic",
+      current_version: "Version actuelle",
+      health_title: "Connexion au jeu",
+      health_game_on: "Connexion au jeu active",
+      health_game_off: "En attente d’activité du jeu",
+      health_tls_down: "HTTPS du jeu indisponible",
+      ch_nav: "Dernier chargement de la page",
+      ch_fetch: "Dernière requête",
+      update_title: "Mises à jour",
+      tr_key: "Clé API",
+      tr_key_saved: "Enregistrée · laisser vide pour la garder",
+      tr_save: "Enregistrer",
+      tr_model: "Modèle",
+      tr_baseurl: "URL du service",
+      tr_glossary_hint: "Saisissez une paire « anglais = chinois simplifié » par ligne. Les paires fonctionnent dans les deux sens.",
+      st_loaded: "Réglages rechargés",
+      st_saved: "Réglages enregistrés",
+      st_testing: "Test en cours…",
+      bh_title: "Traduction en jeu",
+      bh_enabled: "Activer la traduction du chat",
+      adv_summary: "Configuration JSON",
+      adv_label: "Configuration (gardez ******** pour conserver la clé)",
+      preview_title: "Essayer la traduction du chat",
+      preview_outgoing: "Envoi · anglais",
+      preview_incoming: "Réception · chinois simplifié",
+      preview_inspect: "Voir la requête",
+      preview_note: "Utilise le service enregistré et les consignes et le glossaire du formulaire.",
+      preview_local: "Traduction du glossaire local",
+      preview_prepared: "Aperçu de la requête pour {provider}",
+    },
+    "de": {
+      title: "Babel Tower Einstellungen",
+      lang_label: "Sprache",
+      lang_auto: "Automatisch (Spiel folgen)",
+      health_bridge_down: "Bridge nicht erreichbar",
+      tr_title: "Übersetzungsdienst",
+      tr_provider: "Anbieter",
+      tr_key_unset: "nicht gesetzt",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint (leer = Standard)",
+      tr_fallback: "Ausweich-Anbieter (kommagetrennt)",
+      tr_fallback_ph: "z. B. google, deepl",
+      tr_timeout: "Bridge-Anfrage-Timeout (ms)",
+      tr_srclang: "Standard-Ausgangssprache",
+      tr_targetlang: "Zielsprache (eingehend)",
+      tr_own: "Eigene Nachrichten übersetzen",
+      tr_chatlog: "Chat und Übersetzungen im Terminal anzeigen",
+      tr_reload: "Neu laden",
+      tr_test: "Verbindung testen",
+      st_reading: "lese…",
+      st_loadfail: "Laden fehlgeschlagen: {err}",
+      st_saving: "speichere…",
+      st_savefail: "Speichern fehlgeschlagen: {err}",
+      st_testok: "Test bestanden",
+      st_testfail: "Test fehlgeschlagen",
+      test_result: "Übersetzung: {t}",
+      test_error: "Fehler: {e}",
+      bh_display: "Anzeigemodus (eingehend)",
+      bh_display_bilingual: "Zweisprachig (Original + Übersetzung)",
+      bh_display_only: "Nur Übersetzung",
+      bh_outgoing: "Übersetzung beim Senden",
+      bh_out_off: "Aus (Original senden)",
+      bh_out_translation: "Nur Übersetzung",
+      bh_out_bilingual: "Zweisprachig (Original | Übersetzung)",
+      bh_target: "Zielsprache beim Senden",
+      bh_custom: "Benutzerdefiniert…",
+      bh_custom_label: "Eigenes Ziel (BCP-47, z. B. pt-BR)",
+      bh_custom_ph: "z. B. pt-BR",
+      bh_force: "Übersetzung erzwingen (Spracherkennung überspringen)",
+      bh_ui_timeout: "Wartezeit im Spiel (ms)",
+      adv_save: "Dieses JSON speichern",
+      adv_badjson: "ungültiges JSON: {err}",
+      time_just: "gerade eben",
+      time_sec: "vor {n} s",
+      time_min: "vor {n} min",
+      time_hour: "vor {n} h",
+      time_never: "nie",
+      nav_settings: "Einstellungen",
+      nav_preview: "Vorschau",
+      nav_connection: "Verbindung",
+      context_title: "Anweisungen und Glossar",
+      advanced_title: "Weitere Einstellungen",
+      diagnostics_title: "Diagnose",
+      current_version: "Aktuelle Version",
+      health_title: "Spielverbindung",
+      health_game_on: "Spielverbindung aktiv",
+      health_game_off: "Warte auf Spielaktivität",
+      health_tls_down: "Spiel-HTTPS nicht verfügbar",
+      ch_nav: "Zuletzt geladene Spielseite",
+      ch_fetch: "Letzte Anfrage",
+      update_title: "Softwareupdates",
+      tr_key: "API-Schlüssel",
+      tr_key_saved: "Gespeichert · leer lassen zum Beibehalten",
+      tr_save: "Einstellungen speichern",
+      tr_model: "Modell",
+      tr_baseurl: "Dienst-URL",
+      tr_glossary_hint: "Ein Paar „Englisch = vereinfachtes Chinesisch“ pro Zeile eingeben. Die Paare gelten in beide Richtungen.",
+      st_loaded: "Einstellungen neu geladen",
+      st_saved: "Einstellungen gespeichert",
+      st_testing: "Test läuft…",
+      bh_title: "Übersetzung im Spiel",
+      bh_enabled: "Chatübersetzung aktivieren",
+      adv_summary: "JSON-Konfiguration",
+      adv_label: "Konfiguration (******** beibehalten, um den Schlüssel zu behalten)",
+      preview_title: "Chatübersetzung ausprobieren",
+      preview_outgoing: "Ausgehend · Englisch",
+      preview_incoming: "Eingehend · vereinfachtes Chinesisch",
+      preview_inspect: "Anfrage ansehen",
+      preview_note: "Verwendet den gespeicherten Dienst sowie die Anweisungen und das Glossar im Formular.",
+      preview_local: "Aus dem lokalen Glossar",
+      preview_prepared: "Anfragevorschau für {provider}",
+    },
+    "es": {
+      title: "Ajustes de Babel Tower",
+      lang_label: "Idioma",
+      lang_auto: "Automático (seguir al juego)",
+      health_bridge_down: "puente inaccesible",
+      tr_title: "Servicio de traducción",
+      tr_provider: "Proveedor",
+      tr_key_unset: "sin definir",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint (vacío = predeterminado)",
+      tr_fallback: "Proveedores de reserva (separados por comas)",
+      tr_fallback_ph: "p. ej. google, deepl",
+      tr_timeout: "Tiempo de espera del puente (ms)",
+      tr_srclang: "Idioma de origen predeterminado",
+      tr_targetlang: "Idioma de destino (mensajes recibidos)",
+      tr_own: "Traducir mis propios mensajes",
+      tr_chatlog: "Mostrar el chat y las traducciones en la terminal",
+      tr_reload: "Recargar",
+      tr_test: "Probar conexión",
+      st_reading: "leyendo…",
+      st_loadfail: "fallo al leer: {err}",
+      st_saving: "guardando…",
+      st_savefail: "fallo al guardar: {err}",
+      st_testok: "prueba superada",
+      st_testfail: "prueba fallida",
+      test_result: "traducción: {t}",
+      test_error: "error: {e}",
+      bh_display: "Modo de visualización (recibidos)",
+      bh_display_bilingual: "Bilingüe (original + traducción)",
+      bh_display_only: "Solo traducción",
+      bh_outgoing: "Traducción al enviar",
+      bh_out_off: "Desactivada (enviar original)",
+      bh_out_translation: "Solo traducción",
+      bh_out_bilingual: "Bilingüe (original | traducción)",
+      bh_target: "Idioma de destino al enviar",
+      bh_custom: "Personalizado…",
+      bh_custom_label: "Destino personalizado (BCP-47, p. ej. pt-BR)",
+      bh_custom_ph: "p. ej. pt-BR",
+      bh_force: "Forzar traducción (omitir detección de idioma)",
+      bh_ui_timeout: "Espera en el juego (ms)",
+      adv_save: "Guardar este JSON",
+      adv_badjson: "JSON inválido: {err}",
+      time_just: "ahora mismo",
+      time_sec: "hace {n} s",
+      time_min: "hace {n} min",
+      time_hour: "hace {n} h",
+      time_never: "nunca",
+      nav_settings: "Ajustes",
+      nav_preview: "Prueba",
+      nav_connection: "Conexión",
+      context_title: "Instrucciones y glosario",
+      advanced_title: "Más ajustes",
+      diagnostics_title: "Diagnóstico",
+      current_version: "Versión actual",
+      health_title: "Conexión al juego",
+      health_game_on: "Conexión al juego activa",
+      health_game_off: "Esperando actividad del juego",
+      health_tls_down: "HTTPS del juego no disponible",
+      ch_nav: "Última carga de la página",
+      ch_fetch: "Última solicitud",
+      update_title: "Actualizaciones",
+      tr_key: "Clave API",
+      tr_key_saved: "Guardada · deja en blanco para conservarla",
+      tr_save: "Guardar ajustes",
+      tr_model: "Modelo",
+      tr_baseurl: "URL del servicio",
+      tr_glossary_hint: "Escribe un par «inglés = chino simplificado» por línea. Los pares funcionan en ambos sentidos.",
+      st_loaded: "Ajustes recargados",
+      st_saved: "Ajustes guardados",
+      st_testing: "Probando…",
+      bh_title: "Traducción en el juego",
+      bh_enabled: "Activar la traducción del chat",
+      adv_summary: "Configuración JSON",
+      adv_label: "Configuración (deja ******** para conservar la clave)",
+      preview_title: "Probar la traducción del chat",
+      preview_outgoing: "Envío · inglés",
+      preview_incoming: "Recepción · chino simplificado",
+      preview_inspect: "Ver solicitud",
+      preview_note: "Usa el servicio guardado y las instrucciones y el glosario del formulario.",
+      preview_local: "Traducción del glosario local",
+      preview_prepared: "Vista previa de la solicitud para {provider}",
+    },
+    "ru": {
+      title: "Настройки Babel Tower",
+      lang_label: "Язык",
+      lang_auto: "Авто (как в игре)",
+      health_bridge_down: "мост недоступен",
+      tr_title: "Служба перевода",
+      tr_provider: "Провайдер",
+      tr_key_unset: "не задан",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint (пусто = по умолчанию)",
+      tr_fallback: "Резервные провайдеры (через запятую)",
+      tr_fallback_ph: "напр. google, deepl",
+      tr_timeout: "Таймаут запроса моста (мс)",
+      tr_srclang: "Язык оригинала по умолчанию",
+      tr_targetlang: "Целевой язык (входящие сообщения)",
+      tr_own: "Переводить свои сообщения",
+      tr_chatlog: "Показывать чат и переводы в терминале",
+      tr_reload: "Перечитать",
+      tr_test: "Проверить соединение",
+      st_reading: "чтение…",
+      st_loadfail: "ошибка чтения: {err}",
+      st_saving: "сохранение…",
+      st_savefail: "ошибка сохранения: {err}",
+      st_testok: "проверка пройдена",
+      st_testfail: "проверка не пройдена",
+      test_result: "перевод: {t}",
+      test_error: "ошибка: {e}",
+      bh_display: "Режим показа (входящие)",
+      bh_display_bilingual: "Двуязычный (оригинал + перевод)",
+      bh_display_only: "Только перевод",
+      bh_outgoing: "Перевод при отправке",
+      bh_out_off: "Выкл (отправлять оригинал)",
+      bh_out_translation: "Только перевод",
+      bh_out_bilingual: "Двуязычный (оригинал | перевод)",
+      bh_target: "Целевой язык при отправке",
+      bh_custom: "Свой…",
+      bh_custom_label: "Свой язык (BCP-47, напр. pt-BR)",
+      bh_custom_ph: "напр. pt-BR",
+      bh_force: "Переводить всегда (без определения языка)",
+      bh_ui_timeout: "Таймаут ожидания в игре (мс)",
+      adv_save: "Сохранить этот JSON",
+      adv_badjson: "неверный JSON: {err}",
+      time_just: "только что",
+      time_sec: "{n} с назад",
+      time_min: "{n} мин назад",
+      time_hour: "{n} ч назад",
+      time_never: "никогда",
+      nav_settings: "Настройки",
+      nav_preview: "Пробный перевод",
+      nav_connection: "Подключение",
+      context_title: "Инструкции и словарь",
+      advanced_title: "Другие настройки",
+      diagnostics_title: "Диагностика",
+      current_version: "Текущая версия",
+      health_title: "Подключение к игре",
+      health_game_on: "Подключение к игре активно",
+      health_game_off: "Ожидание активности игры",
+      health_tls_down: "HTTPS для игры недоступен",
+      ch_nav: "Последняя загрузка страницы",
+      ch_fetch: "Последний запрос",
+      update_title: "Обновления",
+      tr_key: "Ключ API",
+      tr_key_saved: "Сохранён · оставьте пустым, чтобы сохранить",
+      tr_save: "Сохранить настройки",
+      tr_model: "Модель",
+      tr_baseurl: "URL сервиса",
+      tr_glossary_hint: "Укажите одну пару «английский = упрощённый китайский» в строке. Пары действуют в обоих направлениях.",
+      st_loaded: "Настройки загружены заново",
+      st_saved: "Настройки сохранены",
+      st_testing: "Проверка…",
+      bh_title: "Перевод в игре",
+      bh_enabled: "Включить перевод чата",
+      adv_summary: "Настройки JSON",
+      adv_label: "Настройки (оставьте ********, чтобы сохранить ключ)",
+      preview_title: "Попробовать перевод чата",
+      preview_outgoing: "Исходящие · английский",
+      preview_incoming: "Входящие · упрощённый китайский",
+      preview_inspect: "Показать запрос",
+      preview_note: "Используются сохранённый сервис, инструкции и словарь из формы.",
+      preview_local: "Из локального словаря",
+      preview_prepared: "Предпросмотр запроса для {provider}",
+    },
+    "pt-BR": {
+      title: "Configurações do Babel Tower",
+      lang_label: "Idioma",
+      lang_auto: "Automático (seguir o jogo)",
+      health_bridge_down: "ponte inacessível",
+      tr_title: "Serviço de tradução",
+      tr_provider: "Provedor",
+      tr_key_unset: "não definida",
+      tr_region: "Azure Region",
+      tr_endpoint: "Endpoint (vazio = padrão)",
+      tr_fallback: "Provedores de reserva (separados por vírgula)",
+      tr_fallback_ph: "ex.: google, deepl",
+      tr_timeout: "Tempo limite da ponte (ms)",
+      tr_srclang: "Idioma de origem padrão",
+      tr_targetlang: "Idioma de destino (mensagens recebidas)",
+      tr_own: "Traduzir minhas próprias mensagens",
+      tr_chatlog: "Mostrar o chat e as traduções no terminal",
+      tr_reload: "Recarregar",
+      tr_test: "Testar conexão",
+      st_reading: "lendo…",
+      st_loadfail: "falha ao ler: {err}",
+      st_saving: "salvando…",
+      st_savefail: "falha ao salvar: {err}",
+      st_testok: "teste aprovado",
+      st_testfail: "teste falhou",
+      test_result: "tradução: {t}",
+      test_error: "erro: {e}",
+      bh_display: "Modo de exibição (recebidas)",
+      bh_display_bilingual: "Bilíngue (original + tradução)",
+      bh_display_only: "Somente tradução",
+      bh_outgoing: "Tradução ao enviar",
+      bh_out_off: "Desativada (enviar original)",
+      bh_out_translation: "Somente tradução",
+      bh_out_bilingual: "Bilíngue (original | tradução)",
+      bh_target: "Idioma de destino ao enviar",
+      bh_custom: "Personalizado…",
+      bh_custom_label: "Destino personalizado (BCP-47, ex.: pt-BR)",
+      bh_custom_ph: "ex.: pt-BR",
+      bh_force: "Forçar tradução (ignorar detecção de idioma)",
+      bh_ui_timeout: "Espera no jogo (ms)",
+      adv_save: "Salvar este JSON",
+      adv_badjson: "JSON inválido: {err}",
+      time_just: "agora mesmo",
+      time_sec: "há {n} s",
+      time_min: "há {n} min",
+      time_hour: "há {n} h",
+      time_never: "nunca",
+      nav_settings: "Configurações",
+      nav_preview: "Teste",
+      nav_connection: "Conexão",
+      context_title: "Instruções e glossário",
+      advanced_title: "Mais configurações",
+      diagnostics_title: "Diagnóstico",
+      current_version: "Versão atual",
+      health_title: "Conexão com o jogo",
+      health_game_on: "Conexão com o jogo ativa",
+      health_game_off: "Aguardando atividade no jogo",
+      health_tls_down: "HTTPS do jogo indisponível",
+      ch_nav: "Último carregamento da página",
+      ch_fetch: "Última solicitação",
+      update_title: "Atualizações",
+      tr_key: "Chave de API",
+      tr_key_saved: "Salva · deixe em branco para manter",
+      tr_save: "Salvar configurações",
+      tr_model: "Modelo",
+      tr_baseurl: "URL do serviço",
+      tr_glossary_hint: "Digite um par «inglês = chinês simplificado» por linha. Os pares funcionam nos dois sentidos.",
+      st_loaded: "Configurações recarregadas",
+      st_saved: "Configurações salvas",
+      st_testing: "Testando…",
+      bh_title: "Tradução no jogo",
+      bh_enabled: "Ativar tradução do chat",
+      adv_summary: "Configuração JSON",
+      adv_label: "Configuração (mantenha ******** para conservar a chave)",
+      preview_title: "Testar tradução do chat",
+      preview_outgoing: "Envio · inglês",
+      preview_incoming: "Recebimento · chinês simplificado",
+      preview_inspect: "Ver solicitação",
+      preview_note: "Usa o serviço salvo e as instruções e o glossário do formulário.",
+      preview_local: "Tradução do glossário local",
+      preview_prepared: "Prévia da solicitação para {provider}",
+    }
+  };
+
+  // ---------- i18n ----------
+  var LANG = "zh-Hans";       // 当前生效语言
+  var storeMode = "auto";     // auto | 具体语言代码
+  var gameLang = null;        // 游戏侧语言(zh/en),由桥的 health 提供
+  var lastCfg = null;
+  var providerMeta = { bing: { requiresKey: false, acceptsKey: false } };
+  var providerSig = "";
+  var statusState = {};       // elId -> {key, params, cls}
+  var configBusy = false;
+  var updateVersion = "";
+  var updateChannel = "";
+
+  function t(key, params) {
+    var dict = I18N[LANG] || I18N["zh-Hans"];
+    var s = dict[key];
+    if (s === undefined) s = I18N["en"][key];
+    if (s === undefined) s = key;
+    if (params) {
+      for (var k in params) {
+        if (Object.prototype.hasOwnProperty.call(params, k)) s = s.split("{" + k + "}").join(String(params[k]));
+      }
+    }
+    return s;
+  }
+
+  function detectFromNavigator() {
+    var tags = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || "en"];
+    for (var i = 0; i < tags.length; i += 1) {
+      var low = String(tags[i] || "").replace("_", "-").toLowerCase();
+      if (!low) continue;
+      if (low.indexOf("zh") === 0) {
+        return (low.indexOf("tw") >= 0 || low.indexOf("hk") >= 0 || low.indexOf("hant") >= 0) ? "zh-Hant" : "zh-Hans";
+      }
+      for (var j = 0; j < LANGS.length; j += 1) {
+        if (low.indexOf(LANGS[j].code.toLowerCase()) === 0) return LANGS[j].code;
+      }
+      if (low.indexOf("pt") === 0) return "pt-BR";
+    }
+    return "en";
+  }
+
+  function resolveLang() {
+    if (storeMode !== "auto") return storeMode;
+    // 2026-10-29:gameLang 现为完整 code 集(zh-Hans/zh-Hant/ja/ko/fr/de/es/ru/pt-BR/en),
+    // 旧值 zh 兼容;未识别回落浏览器语言检测。
+    if (gameLang === "zh") return "zh-Hans";
+    if (gameLang === "zh-Hans" || gameLang === "zh-Hant") return gameLang;
+    for (var i = 0; i < LANGS.length; i += 1) if (LANGS[i].code === gameLang) return gameLang;
+    return detectFromNavigator();
+  }
+
+  function applyI18n() {
+    document.documentElement.lang = LANG === "zh-Hans" ? "zh-Hans" : LANG;
+    document.title = t("title");
+    var els = document.querySelectorAll("[data-i18n]");
+    for (var i = 0; i < els.length; i += 1) els[i].textContent = t(els[i].getAttribute("data-i18n"));
+    var phs = document.querySelectorAll("[data-i18n-ph]");
+    for (var j = 0; j < phs.length; j += 1) phs[j].placeholder = t(phs[j].getAttribute("data-i18n-ph"));
+    // 重放状态文案
+    for (var id in statusState) {
+      if (!Object.prototype.hasOwnProperty.call(statusState, id)) continue;
+      var el = $(id);
+      if (!el) continue;
+      setStatus(id, statusState[id].key, statusState[id].params, statusState[id].cls);
+    }
+    buildLangSelect();
+    ensureProviders();
+    updateKeyPlaceholder();
+  }
+
+  function buildLangSelect() {
+    var sel = $("uiLang");
+    var cur = sel.value || storeMode;
+    sel.innerHTML = "";
+    var o0 = document.createElement("option");
+    o0.value = "auto";
+    o0.textContent = t("lang_auto");
+    sel.appendChild(o0);
+    for (var i = 0; i < LANGS.length; i += 1) {
+      var o = document.createElement("option");
+      o.value = LANGS[i].code;
+      o.textContent = LANGS[i].label;
+      sel.appendChild(o);
+    }
+    sel.value = cur;
+    if (!sel.value) sel.value = "auto";
+  }
+
+  function switchLang(mode) {
+    storeMode = mode;
+    try { localStorage.setItem(STORE_KEY, mode); } catch (e) {}
+    LANG = resolveLang();
+    $("uiLang").value = mode;
+    applyI18n();
+  }
+
+  // ---------- 通用 ----------
+  var nativeBridge = document.documentElement.hasAttribute("data-native-bridge");
+  var configRevision = "";
+  function fetchJson(path, opt) {
+    var request = Object.assign({ cache: "no-store" }, opt || {});
+    if (nativeBridge && request.method === "POST") request.headers = Object.assign({}, request.headers, { "X-Deadlock-Bridge": "1" });
+    return fetch(path, request).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j }; });
+    });
+  }
+
+  function setStatus(id, key, params, cls) {
+    var el = $(id);
+    var message = key ? t(key, params) : "";
+    statusState[id] = { key: key, params: params, cls: cls };
+    if (el.textContent !== message) el.textContent = message;
+    el.classList.toggle("ok", cls === "ok");
+    el.classList.toggle("bad", cls === "bad");
+  }
+
+  function requestUpdate(version) {
+    var check = $("updateCheck"), install = $("updateInstall");
+    var channel = updateChannel;
+    check.disabled = install.disabled = true;
+    setStatus("updateStatus", version ? "update_installing" : "update_checking", { version: version });
+    var opt = { method: "POST" };
+    if (version) {
+      opt.headers = { "Content-Type": "application/json" };
+      opt.body = JSON.stringify({ version: version });
+    }
+    fetchJson(version ? "/api/v1/update/install" : "/api/v1/update/check", opt).then(function (r) {
+      if (channel !== updateChannel) return;
+      if (r.status !== 200) throw new Error("HTTP " + r.status);
+      var state = r.body;
+      updateVersion = state.available ? state.latest : "";
+      install.hidden = !updateVersion;
+      var key = state.restartRequired ? "update_restart" : state.available ? "update_available" : state.latest ? "update_current" : "update_missing";
+      setStatus("updateStatus", key, { version: state.latest }, "ok");
+    }).catch(function () {
+      if (channel !== updateChannel) return;
+      updateVersion = "";
+      install.hidden = true;
+      setStatus("updateStatus", "update_error", null, "bad");
+    }).finally(function () {
+      if (channel === updateChannel) check.disabled = install.disabled = false;
+    });
+  }
+
+  function rel(ts, now) {
+    if (!ts) return t("time_never");
+    var s = Math.max(0, Math.round((now - ts) / 1000));
+    if (s < 3) return t("time_just");
+    if (s < 60) return t("time_sec", { n: s });
+    if (s < 3600) return t("time_min", { n: Math.round(s / 60) });
+    return t("time_hour", { n: Math.round(s / 3600) });
+  }
+
+  // ---------- 通道健康 ----------
+  function loadHealth() {
+    fetchJson("/api/v1/health").then(function (r) {
+      var j = r.body || {};
+      if (!j.ok) throw new Error("HTTP " + r.status);
+      $("version").textContent = j.version ? "v" + j.version : "—";
+      var channel = j.version + "/" + !!j.updatesEnabled;
+      if (channel !== updateChannel) {
+        updateChannel = channel;
+        updateVersion = "";
+        $("updateActions").hidden = !j.updatesEnabled;
+        $("updateInstall").hidden = true;
+        $("updateCheck").disabled = !j.updatesEnabled;
+        if (j.updatesEnabled) requestUpdate("");
+      }
+      if (j.gameLang) {
+        gameLang = j.gameLang;
+        if (storeMode === "auto") {
+          var want = resolveLang();
+          if (want !== LANG) { LANG = want; applyI18n(); }
+        }
+      }
+      var connection = j.gameRunning ? "health_game_on" : j.tlsReady ? "health_game_off" : "health_tls_down";
+      setStatus("gameState", connection, null, j.gameRunning ? "ok" : j.tlsReady ? "" : "bad");
+      var ch = (j.channels && j.channels.byChannel) || {};
+      var now = (j.channels && j.channels.now) || Date.now();
+      $("age-bridgeNav").textContent = rel(ch.bridgeNav, now);
+      $("age-gameFetch").textContent = rel(ch.gameFetch, now);
+      // 服务商列表以桥为准(以后加 provider 不用改页面)
+      var provs = Array.isArray(j.providers) ? j.providers : [];
+      if (provs.length) {
+        provs.forEach(function (p) { providerMeta[p.id] = p; });
+        var sig = provs.map(function (p) {
+          return [p.id, p.label, p.requiresKey, p.acceptsKey, p.ai, p.editableBaseUrl].join(":");
+        }).join(",");
+        if (sig !== providerSig) {
+          providerSig = sig;
+          rebuildProviders(provs);
+        }
+      }
+    }).catch(function () {
+      setStatus("gameState", "health_bridge_down", null, "bad");
+      $("age-bridgeNav").textContent = $("age-gameFetch").textContent = "—";
+    });
+  }
+
+  // ---------- 服务商 ----------
+  // 兜底清单:桥不可达(或老版本桥)时下拉也要有内容,否则整个表单没法用。
+  var DEFAULT_PROVIDERS = [
+    { id: "bing", label: "Bing (free)", requiresKey: false, acceptsKey: false },
+    { id: "microsoft", label: "Microsoft (Azure)", requiresKey: true, acceptsKey: true },
+    { id: "deepseek", label: "DeepSeek", ai: true },
+    { id: "openai", label: "OpenAI-compatible", ai: true, editableBaseUrl: true },
+    { id: "anthropic", label: "Anthropic Claude", ai: true },
+    { id: "gemini", label: "Google Gemini", ai: true },
+    { id: "qwen", label: "Qwen", ai: true },
+    { id: "grok", label: "xAI Grok", ai: true },
+    { id: "openrouter", label: "OpenRouter", ai: true },
+    { id: "ollama", label: "Ollama", ai: true, editableBaseUrl: true, requiresKey: false },
+    { id: "compatible", label: "Custom OpenAI-compatible", ai: true, editableBaseUrl: true, requiresKey: false },
+    { id: "deepl", label: "DeepL", requiresKey: true, acceptsKey: true },
+    { id: "google", label: "Google", requiresKey: false, acceptsKey: true }
+  ];
+
+  function ensureProviders() {
+    if ($("provider").options.length) return;
+    DEFAULT_PROVIDERS.forEach(function (p) { providerMeta[p.id] = p; });
+    rebuildProviders(DEFAULT_PROVIDERS);
+  }
+
+  function rebuildProviders(provs) {
+    var sel = $("provider");
+    var current = sel.value;
+    sel.innerHTML = "";
+    provs.forEach(function (p) {
+      var o = document.createElement("option");
+      o.value = p.id;
+      o.textContent = p.label || p.id;
+      sel.appendChild(o);
+    });
+    var saved = lastCfg && lastCfg.provider;
+    sel.value = provs.some(function (p) { return p.id === current; }) ? current :
+      provs.some(function (p) { return p.id === saved; }) ? saved : provs[0].id;
+    refreshProviderRows();
+    if (sel.value !== current) loadProviderFields();
+  }
+
+  function refreshProviderRows() {
+    var p = $("provider").value;
+    var meta = providerMeta[p] || {};
+    $("row-apiKey").hidden = meta.acceptsKey === false;
+    $("row-region").hidden = p !== "microsoft";
+    $("row-endpoint").hidden = p !== "microsoft" && p !== "deepl";
+    $("row-baseUrl").hidden = !meta.ai;
+    $("row-model").hidden = !meta.ai;
+    $("baseUrl").readOnly = !meta.editableBaseUrl;
+  }
+
+  function updateKeyPlaceholder() {
+    var selected = (lastCfg && lastCfg[$("provider").value]) || {};
+    $("apiKey").placeholder = t(selected.hasApiKey ? "tr_key_saved" : "tr_key_unset");
+  }
+
+  function loadProviderFields() {
+    var selected = (lastCfg && lastCfg[$("provider").value]) || {};
+    $("baseUrl").value = selected.baseUrl || "";
+    $("model").value = selected.model || "";
+    $("endpoint").value = selected.endpoint || "";
+    $("apiKey").value = "";
+    updateKeyPlaceholder();
+  }
+
+  // ---------- 配置 ----------
+  function fillForm(cfg) {
+    lastCfg = cfg;
+    $("provider").value = cfg.provider || "deepseek";
+    $("region").value = (cfg.microsoft && cfg.microsoft.region) || "";
+    $("fallback").value = Array.isArray(cfg.fallbackProviders) ? cfg.fallbackProviders.join(", ") : "";
+    var context = cfg.translationContext || {};
+    $("translationPrompt").value = context.prompt || "";
+    $("translationGlossary").value = context.glossary || "";
+    $("timeoutMs").value = cfg.timeoutMs || "";
+    $("sourceLanguage").value = (cfg.defaults && cfg.defaults.sourceLanguage) || "auto";
+    fillLanguage("targetLanguage", (cfg.defaults && cfg.defaults.targetLanguage) || "zh-Hans");
+    $("translateOwn").checked = cfg.translateOwn !== false;
+    $("chatLog").checked = !(cfg.chatLog && cfg.chatLog.enabled === false);
+    var ui = cfg.ui || {};
+    $("uiEnabled").checked = ui.enabled !== false;
+    $("displayMode").value = ui.displayMode || "bilingual";
+    $("outgoing").value = ui.outgoing || "off";
+    fillLanguage("outgoingTarget", ui.outgoingTarget || "en");
+    $("force").checked = !!ui.force;
+    $("uiTimeoutMs").value = ui.timeoutMs || 15000;
+    $("raw").value = JSON.stringify(cfg, null, 2);
+    refreshProviderRows();
+    loadProviderFields();
+  }
+
+  function showCustomLanguage(id) {
+    $(id + "Custom").parentElement.hidden = $(id).value !== "custom";
+  }
+  function fillLanguage(id, value) {
+    var preset = LANGS.some(function (lang) { return lang.code === value; });
+    $(id).value = preset ? value : "custom";
+    $(id + "Custom").value = preset ? "" : value;
+    showCustomLanguage(id);
+  }
+  function selectedLanguage(id, fallback) {
+    var value = $(id).value;
+    return value === "custom" ? $(id + "Custom").value.trim() || fallback : value;
+  }
+
+  function setConfigBusy(busy) {
+    configBusy = busy;
+    $("settingsFields").disabled = $("rawFields").disabled = $("save").disabled = busy || !lastCfg;
+    $("reload").disabled = busy;
+  }
+
+  function loadConfig(showSuccess) {
+    setConfigBusy(true);
+    setStatus("cfgStatus", "st_reading");
+    setStatus("rawStatus", "");
+    fetchJson("/api/v1/config?full=1").then(function (r) {
+      var j = r.body || {};
+      if (!j.ok || !j.config) throw new Error((j && j.error) || "load_failed");
+      configRevision = j.rev || "";
+      fillForm(j.config);
+      setStatus("cfgStatus", showSuccess ? "st_loaded" : "", null, "ok");
+    }).catch(function (e) {
+      setStatus("cfgStatus", "st_loadfail", { err: e.message || e }, "bad");
+    }).finally(function () {
+      setConfigBusy(false);
+    });
+  }
+
+  function collectForm() {
+    var p = $("provider").value;
+    var out = {
+      provider: p,
+      fallbackProviders: $("fallback").value.split(",").map(function (s) { return s.trim(); })
+        .filter(function (s) { return !!s; }),
+      translationContext: {
+        prompt: $("translationPrompt").value,
+        glossary: $("translationGlossary").value
+      },
+      timeoutMs: Number($("timeoutMs").value) || undefined,
+      translateOwn: $("translateOwn").checked,
+      chatLog: { enabled: $("chatLog").checked },
+      microsoft: { region: $("region").value.trim() || undefined },
+      deepl: {}
+    };
+    var ep = $("endpoint").value.trim();
+    if (p === "microsoft") out.microsoft.endpoint = ep || undefined;
+    if (p === "deepl") out.deepl.endpoint = ep || undefined;
+    var meta = providerMeta[p] || {};
+    if (meta.ai) {
+      out[p] = { model: $("model").value.trim() };
+      if (meta.editableBaseUrl) out[p].baseUrl = $("baseUrl").value.trim() || undefined;
+    }
+    var key = $("apiKey").value.trim();
+    // 不收 Key 的 provider(bing)绝不能带扁平 apiKey:桥端扁平字段按 provider 落段,
+    // bing 会落到 microsoft 分支,把微软的 Key 改掉。
+    if (key && meta.acceptsKey !== false) out.apiKey = key;
+    // 游戏内行为:写进 ui.*(游戏侧 syncPanelFromConfig 只认 c.ui.*),面板/网页两条路同语义
+    var targetLang = selectedLanguage("targetLanguage", "zh-Hans");
+    out.defaults = { sourceLanguage: $("sourceLanguage").value.trim() || "auto", targetLanguage: targetLang };
+    out.ui = {
+      enabled: $("uiEnabled").checked,
+      provider: p,
+      displayMode: $("displayMode").value,
+      outgoing: $("outgoing").value,
+      outgoingTarget: selectedLanguage("outgoingTarget", "en"),
+      targetLanguage: targetLang,
+      force: $("force").checked,
+      timeoutMs: Number($("uiTimeoutMs").value) || 15000
+    };
+    return out;
+  }
+
+  function save(payload, statusElId) {
+    if (configBusy || !lastCfg) return;
+    setConfigBusy(true);
+    setStatus(statusElId === "cfgStatus" ? "rawStatus" : "cfgStatus", "");
+    setStatus(statusElId, "st_saving");
+    fetchJson("/api/v1/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config: payload, rev: configRevision })
+    }).then(function (r) {
+      var j = r.body || {};
+      if (!j.ok || !j.config) throw new Error(j.error || ("HTTP " + r.status));
+      configRevision = j.rev || "";
+      fillForm(j.config);
+      setStatus(statusElId, "st_saved", null, "ok");
+    }).catch(function (e) {
+      setStatus(statusElId, "st_savefail", { err: e.message || e }, "bad");
+    }).finally(function () {
+      setConfigBusy(false);
+    });
+  }
+
+  $("previewExample").addEventListener("click", function () {
+    $("previewText").value = $("previewTarget").value === "en"
+      ? "买BKB，杀掉卡牌"
+      : "Buy BKB before we go in. Focus Wraith.";
+    $("previewText").focus();
+  });
+
+  $("previewForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var text = $("previewText").value.trim();
+    if (!text || $("previewRun").disabled) return;
+    var dryRun = event.submitter === $("previewInspect");
+    $("previewRun").disabled = $("previewInspect").disabled = true;
+    $("previewTranslation").textContent = "";
+    $("previewDetails").hidden = true;
+    setStatus("previewStatus", "preview_pending");
+    fetchJson("/api/v1/translation-preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: text,
+        targetLanguage: $("previewTarget").value,
+        outgoing: $("previewTarget").value === "en",
+        prompt: $("translationPrompt").value,
+        glossary: $("translationGlossary").value,
+        dryRun: dryRun
+      })
+    }).then(function (r) {
+      var result = r.body || {};
+      var details = result.details || {};
+      if (typeof result.translation === "string") {
+        $("previewTranslation").textContent = result.translation;
+      }
+      if (details.method === "provider") {
+        var parts = [];
+        if (details.messages) {
+          parts.push(t("preview_terms") + "\n" + (details.hints.join("\n") || t("preview_none")));
+        }
+        if (details.protectedTerms.length) {
+          parts.push(t("preview_tokens") + "\n" + details.protectedTerms.map(function (term) {
+            return term.token + " → " + term.translation;
+          }).join("\n"));
+        }
+        if (details.messages) parts.push(t("preview_system") + "\n" + details.messages[0].content);
+        parts.push(t("preview_user") + "\n" + details.text);
+        $("previewRequest").textContent = parts.join("\n\n");
+        $("previewDetails").hidden = false;
+        $("previewDetails").open = dryRun || !result.ok;
+      }
+      if (!result.ok) throw new Error(result.error || ("HTTP " + r.status));
+      var key = details.method === "dictionary" ? "preview_local" : dryRun ? "preview_prepared" : "preview_sent";
+      var provider = providerMeta[details.provider] || {};
+      setStatus("previewStatus", key, { provider: provider.label || details.provider }, "ok");
+    }).catch(function (e) {
+      setStatus("previewStatus", "preview_error", { err: e.message || e }, "bad");
+    }).finally(function () {
+      $("previewRun").disabled = $("previewInspect").disabled = false;
+    });
+  });
+
+  // ---------- 导航 ----------
+  var navigation = document.querySelector("nav");
+  var navLinks = Array.from(navigation.querySelectorAll("a"));
+
+  function showPanel(focusHeading) {
+    var active = navLinks.find(function (link) { return link.hash === location.hash; }) || navLinks[0];
+    navLinks.forEach(function (link) {
+      var panel = $(link.hash.slice(1));
+      panel.hidden = link !== active;
+      if (link === active) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+    if (focusHeading) {
+      window.scrollTo(0, 0);
+      $(active.hash.slice(1)).querySelector("h2").focus({ preventScroll: true });
+    }
+  }
+
+  navigation.addEventListener("click", function (event) {
+    var link = event.target.closest("a");
+    if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (link.hasAttribute("aria-current")) return;
+    history.pushState(null, "", link.hash);
+    showPanel(true);
+  });
+  window.addEventListener("hashchange", function () { showPanel(true); });
+
+  // ---------- 事件 ----------
+  $("uiLang").addEventListener("change", function () { switchLang($("uiLang").value); });
+  $("updateCheck").addEventListener("click", function () { requestUpdate(""); });
+  $("updateInstall").addEventListener("click", function () { if (updateVersion) requestUpdate(updateVersion); });
+  $("provider").addEventListener("change", function () {
+    refreshProviderRows();
+    loadProviderFields();
+  });
+  $("reload").addEventListener("click", function () { loadConfig(true); });
+  $("settingsForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    save(collectForm(), "cfgStatus");
+  });
+  $("settingsForm").addEventListener("invalid", function (event) {
+    var details = event.target.closest("details");
+    if (details) details.open = true;
+  }, true);
+  $("settingsForm").addEventListener("input", function (event) {
+    var id = event.target === $("raw") ? "rawStatus" : "cfgStatus";
+    if (statusState[id] && statusState[id].key === "st_saved") setStatus(id, "");
+  });
+
+  $("rawSave").addEventListener("click", function () {
+    var raw;
+    try { raw = JSON.parse($("raw").value); }
+    catch (e) { setStatus("rawStatus", "adv_badjson", { err: e.message }, "bad"); return; }
+    save(raw, "rawStatus");
+  });
+
+  $("test").addEventListener("click", function () {
+    var btn = $("test");
+    btn.disabled = true;
+    setStatus("testStatus", "st_testing");
+    setStatus("testOut", "");
+    fetchJson("/api/v1/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "Hello, this is a Babel Tower connection test." })
+    }).then(function (r) {
+      var j = r.body || {};
+      if (j.ok) {
+        setStatus("testStatus", "st_testok", null, "ok");
+        setStatus("testOut", "test_result", { t: j.translation || "" });
+      } else {
+        setStatus("testStatus", "st_testfail", null, "bad");
+        setStatus("testOut", "test_error", { e: j.error || ("HTTP " + r.status) });
+      }
+    }).catch(function (e) {
+      setStatus("testStatus", "st_testfail", null, "bad");
+      setStatus("testOut", "test_error", { e: e.message || e });
+    }).finally(function () { btn.disabled = false; });
+  });
+
+  // ---------- 启动 ----------
+  try { storeMode = localStorage.getItem(STORE_KEY) || "auto"; } catch (e) { storeMode = "auto"; }
+  if (storeMode !== "auto") {
+    var ok = false;
+    for (var i = 0; i < LANGS.length; i += 1) if (LANGS[i].code === storeMode) ok = true;
+    if (!ok) storeMode = "auto";
+  }
+  LANG = resolveLang();
+  ["targetLanguage", "outgoingTarget"].forEach(function (id) {
+    var select = $(id);
+    LANGS.forEach(function (lang) {
+      select.add(new Option(lang.label, lang.code));
+    });
+    var custom = new Option("", "custom");
+    custom.setAttribute("data-i18n", "bh_custom");
+    select.add(custom);
+    select.addEventListener("change", function () { showCustomLanguage(id); });
+  });
+  applyI18n();
+  showPanel(false);
+  fillLanguage("targetLanguage", "zh-Hans");
+  fillLanguage("outgoingTarget", "en");
+  loadConfig();
+  loadHealth();
+  setInterval(loadHealth, HEALTH_MS);
+})();
+</script>
+</body>
+</html>

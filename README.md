@@ -21,8 +21,17 @@
 
 ## 构建
 
-- **编译翻译桥**（Go 1.25.12+）运行 `go build ./cmd/deadlock-translator`。
-- **生成完整发布包**（Python 3.9+）运行 `python scripts/build_release.py`，Linux 上使用 `python3`。产物位于 `dist/`。
+- **编译翻译桥**（Go 1.25.12+）运行 `go build -o dist/local/ ./cmd/deadlock-translator`。Windows 可用根目录的 `Start-Go-Bridge.cmd` 启动。
+- **生成完整发布包**（Python 3.9+）按[底包说明](docs/vpk.md)下载上游 VPK，再运行 `python scripts/build_release.py --base-vpk "路径/pak03_dir.vpk"`。Linux 上使用 `python3`，产物位于 `dist/`。
 
-[架构文档](docs/architecture.md) · [许可证与资源来源](NOTICE.md)
-# Deadlock-AI-Translator
+## 项目目录
+
+| 目录 | 内容 |
+| --- | --- |
+| `cmd/deadlock-translator/`、`internal/` | Go 翻译桥入口、实现和内嵌资源 |
+| `panorama/` | 游戏模组源码 |
+| `scripts/`、`.github/workflows/` | 构建、测试和发布 |
+| `docs/`、`examples/` | 文档和示例 |
+| `local/vpk/`、`dist/` | 本地 VPK 底包和构建产物，均由 Git 忽略 |
+
+[快速上手](docs/QUICKSTART.zh-CN.md) · [架构文档](docs/architecture.md) · [词库示例](examples/dictionary.example.json) · [许可证与资源来源](NOTICE.md)

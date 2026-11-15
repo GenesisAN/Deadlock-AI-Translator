@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  BabelTower v3 — 全屏设置页(独立 XML,2026-11-05 迁移产物)
+  迁移:设置窗口不再内嵌 Esc 菜单(hud_escape_menu.xml 已删除),改由 lct_boot.js
+  在 chat.xml context 运行时 BLoadLayout 本页 —— 单一构建适配原版/QOL/任何
+  esc mod,零布局合并竞争。
+  规则:
+    1. 窗口标记 = 原 hud_escape_menu.xml LCTSettingsWindow 块逐字搬运,内部
+       ID/class 一律不变(lct_settings_ui.js 的 findById/applyTexts/render 零改动可用)。
+    2. 本文件**零 <scripts> 零内联处理器**(canary 终判 2026-11-06:BLoad
+       页内联 onactivate 会触发但解析在独立 context —— 自带引擎 $,装载者
+       exportFn 的导出不可见,守卫判 false 静默 no-op;33 个内联控件
+       (3 开关+6 下拉+24 选项)全灭 33:0,SetPanelEvent 全活,完整机理见
+       docs/INTEGRATION.md §7)。全部控件行为由 lct_boot.bindPageHandlers →
+       lct_settings_ui.LCTUIBindControls 在装载后 SetPanelEvent 确定性绑定;
+       本文件是纯声明树。内联 = 按名字在触发 context 解析(context 敏感);
+       SetPanelEvent = 闭包捕获装载者函数对象(context 免疫)——重绑可靠
+       的根本原因。
+    3. 开/关 = 页根 .LCTOpen 类(见 lct_settings.css 尾部页根规则);Esc 语义由
+       lct_settings.js 接管(页根 oncancel + escPoll),lct_boot.js 确定性绑定
+       页根 onactivate(点暗背板收页)/关闭按钮/窗口空 onactivate(挡穿透)。
+    4. 样式自包含:跨 context 样式从不依赖(QOLLOCK 生产实证),本页自己 include
+       所需样式表(citadel_base_styles 供按钮/标签默认样式,lct_settings 供全部
+       LCT* 控件样式)。
+    5. 结构 shim:Panorama 禁止布局根面板带 id(resourcecompiler 实证:"Found root
+       panel with 'id' attribute, which is not permitted"),故页根外套一层无 id
+       全屏 shim(hittest=false 不挡输入,子树寻址不受影响);带 id 的页根在 shim
+       内,findById/FindChildTraverse 照常命中。
+    6. 菜单选项的值不写在 XML(内联已废):lct_settings_ui.js 的 LABELS 表是
+       值的唯一来源,选项按钮按"选项文本 ↔ localizeText(LABELS 值)"匹配绑定。
+       新增选项 = XML 加一行 Button + LABELS 加一个值,两处顺序无关。
+-->
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
+		<include src="s2r://panorama/styles/lct_settings.vcss_c" />
+	</styles>
+	<Panel hittest="false" style="width: 100%; height: 100%;">
+		<Panel id="LCTSettingsPage" class="LCTSettingsPage" hittest="true">
+		<Panel id="LCTSettingsWindow" class="LCTSettingsWindow" hittest="true">
+			<Panel class="LCTHeader">
+				<Label id="LCTTxtTitle" class="LCTHeaderText" text="BABELTOWER 翻译" />
+				<Panel class="LCTHeaderSpacer" />
+				<Label id="LCTBuildId" class="LCTBuildId" text="" />
+				<Button id="LCTSettingsClose" class="LCTCloseBtn">
+					<Label text="X" />
+				</Button>
+			</Panel>
+			<Panel id="LCTSettingsTabInstance" class="LCTTab" hittest="true">
+				<Panel class="LCTRow">
+					<Panel class="LCTLine">
+						<Panel class="LCTRowBody">
+							<Label id="LCTTxtRowEnabled" class="LCTRowLabel" text="启用翻译" />
+							<Label id="LCTTxtHintEnabled" class="LCTRowHint" text="关闭后所有消息保留原文" />
+						</Panel>
+						<Panel class="LCTRight">
+							<Button id="LCTTglEnabled" class="LCTToggle">
+								<Panel class="LCTToggleKnob" />
+							</Button>
+						</Panel>
+					</Panel>
+				</Panel>
+
+				<Panel class="LCTRow">
+					<Panel class="LCTLine">
+						<Panel class="LCTRowBody">
+							<Label id="LCTTxtRowTarget" class="LCTRowLabel" text="目标语言" />
+							<Label id="LCTTxtHintTarget" class="LCTRowHint" text="把别人的消息翻译成这个语言" />
+						</Panel>
+						<Panel class="LCTRight">
+							<Button id="LCTSelTarget" class="LCTSelect">
+								<Label id="LCTSelTargetLabel" class="LCTSelectLabel" text="简体中文" />
+								<Label class="LCTSelectArrow" text="▼" />
+							</Button>
+						</Panel>
+					</Panel>
+					<Panel id="LCTMenuTarget" class="LCTMenu">
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="简体中文 (zh-Hans)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="繁體中文 (zh-Hant)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="English (en)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="日本語 (ja)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="한국어 (ko)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="Français (fr)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="Deutsch (de)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="Español (es)" /></Button>
+					</Panel>
+				</Panel>
+
+				<Panel class="LCTRow">
+					<Panel class="LCTLine">
+						<Panel class="LCTRowBody">
+							<Label id="LCTTxtRowDisplay" class="LCTRowLabel" text="显示模式" />
+							<Label id="LCTTxtHintDisplay" class="LCTRowHint" text="译文下方是否保留原文" />
+						</Panel>
+						<Panel class="LCTRight">
+							<Button id="LCTSelDisplay" class="LCTSelect">
+								<Label id="LCTSelDisplayLabel" class="LCTSelectLabel" text="双语" />
+								<Label class="LCTSelectArrow" text="▼" />
+							</Button>
+						</Panel>
+					</Panel>
+					<Panel id="LCTMenuDisplay" class="LCTMenu">
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="双语 (原文 + 译文)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="仅译文" /></Button>
+					</Panel>
+				</Panel>
+
+				<Panel class="LCTRow">
+					<Panel class="LCTLine">
+						<Panel class="LCTRowBody">
+							<Label id="LCTTxtRowOutgoing" class="LCTRowLabel" text="发送前翻译" />
+							<Label id="LCTTxtHintOutgoing" class="LCTRowHint" text="把自己打的消息先翻成目标语言再发出" />
+						</Panel>
+						<Panel class="LCTRight">
+							<Button id="LCTSelOutgoing" class="LCTSelect">
+								<Label id="LCTSelOutgoingLabel" class="LCTSelectLabel" text="关" />
+								<Label class="LCTSelectArrow" text="▼" />
+							</Button>
+						</Panel>
+					</Panel>
+					<Panel id="LCTMenuOutgoing" class="LCTMenu">
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="关 (发原文)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="仅译文" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="双语 (原文 | 译文)" /></Button>
+					</Panel>
+				</Panel>
+
+				<Panel class="LCTRow">
+					<Panel class="LCTLine">
+						<Panel class="LCTRowBody">
+							<Label id="LCTTxtRowOutTarget" class="LCTRowLabel" text="发送目标语言" />
+						</Panel>
+						<Panel class="LCTRight">
+							<Button id="LCTSelOutTarget" class="LCTSelect">
+								<Label id="LCTSelOutTargetLabel" class="LCTSelectLabel" text="English" />
+								<Label class="LCTSelectArrow" text="▼" />
+							</Button>
+						</Panel>
+					</Panel>
+					<Panel id="LCTMenuOutTarget" class="LCTMenu">
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="English (en)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="简体中文 (zh-Hans)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="繁體中文 (zh-Hant)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="日本語 (ja)" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="한국어 (ko)" /></Button>
+					</Panel>
+				</Panel>
+
+				<Panel class="LCTRow">
+					<Panel class="LCTLine">
+						<Panel class="LCTRowBody">
+							<Label id="LCTTxtRowForce" class="LCTRowLabel" text="强制翻译" />
+							<Label id="LCTTxtHintForce" class="LCTRowHint" text="跳过语言判断,一律翻译" />
+						</Panel>
+						<Panel class="LCTRight">
+							<Button id="LCTTglForce" class="LCTToggle">
+								<Panel class="LCTToggleKnob" />
+							</Button>
+						</Panel>
+					</Panel>
+				</Panel>
+
+				<Panel class="LCTRow">
+					<Panel class="LCTLine">
+						<Panel class="LCTRowBody">
+							<Label id="LCTTxtRowTranslateOwn" class="LCTRowLabel" text="翻译自己的消息" />
+							<Label id="LCTTxtHintTranslateOwn" class="LCTRowHint" text="自己发出的消息也显示译文" />
+						</Panel>
+						<Panel class="LCTRight">
+							<Button id="LCTTglTranslateOwn" class="LCTToggle">
+								<Panel class="LCTToggleKnob" />
+							</Button>
+						</Panel>
+					</Panel>
+				</Panel>
+
+				<Panel class="LCTRow">
+					<Panel class="LCTLine">
+						<Panel class="LCTRowBody">
+							<Label id="LCTTxtRowTimeout" class="LCTRowLabel" text="翻译超时" />
+						</Panel>
+						<Panel class="LCTRight">
+							<Button id="LCTSelTimeout" class="LCTSelect">
+								<Label id="LCTSelTimeoutLabel" class="LCTSelectLabel" text="8 秒" />
+								<Label class="LCTSelectArrow" text="▼" />
+							</Button>
+						</Panel>
+					</Panel>
+					<Panel id="LCTMenuTimeout" class="LCTMenu">
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="4 秒" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="8 秒" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="12 秒" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="16 秒" /></Button>
+					</Panel>
+				</Panel>
+
+				<Panel class="LCTRow">
+					<Panel class="LCTLine">
+						<Panel class="LCTRowBody">
+							<Label id="LCTTxtRowUiLang" class="LCTRowLabel" text="界面语言" />
+						</Panel>
+						<Panel class="LCTRight">
+							<Button id="LCTSelUiLang" class="LCTSelect">
+								<Label id="LCTSelUiLangLabel" class="LCTSelectLabel" text="中文" />
+								<Label class="LCTSelectArrow" text="▼" />
+							</Button>
+						</Panel>
+					</Panel>
+					<Panel id="LCTMenuUiLang" class="LCTMenu">
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="中文" /></Button>
+						<Button class="LCTMenuOption"><Label class="LCTMenuOptionLabel" text="English" /></Button>
+					</Panel>
+				</Panel>
+
+				<Panel class="LCTFooter">
+					<Panel id="LCTDot" class="LCTDot" />
+					<Label id="LCTStatusText" class="LCTStatusText" text="未连接" />
+				</Panel>
+			</Panel>
+		</Panel>
+	</Panel>
+	</Panel>
+</root>
