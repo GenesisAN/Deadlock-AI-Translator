@@ -23,17 +23,18 @@ import (
 )
 
 type Server struct {
-	store      *settings.Store
-	engine     *translate.Engine
-	updates    *Updates
-	ui, bridge []byte
-	version    string
-	started    int64
-	tls        atomic.Bool
-	nav, fetch atomic.Int64
+	store           *settings.Store
+	engine          *translate.Engine
+	updates         *Updates
+	localGlossaries *translate.LocalGlossaries
+	ui, bridge      []byte
+	version         string
+	started         int64
+	tls             atomic.Bool
+	nav, fetch      atomic.Int64
 }
 
-func New(store *settings.Store, engine *translate.Engine, assets fs.FS, version string, updates *Updates) (*Server, error) {
+func New(store *settings.Store, engine *translate.Engine, assets fs.FS, version string, updates *Updates, localGlossaries *translate.LocalGlossaries) (*Server, error) {
 	ui, e := fs.ReadFile(assets, "web/settings.html")
 	if e != nil {
 		return nil, e
@@ -44,7 +45,7 @@ func New(store *settings.Store, engine *translate.Engine, assets fs.FS, version 
 	}
 	ui = bytes.Replace(ui, []byte("<html"), []byte("<html data-native-bridge"), 1)
 	bridge = bytes.Replace(bridge, []byte("<html"), []byte("<html data-native-bridge"), 1)
-	return &Server{store: store, engine: engine, ui: ui, bridge: bridge, version: version, started: time.Now().UnixMilli(), updates: updates}, nil
+	return &Server{store: store, engine: engine, ui: ui, bridge: bridge, version: version, started: time.Now().UnixMilli(), updates: updates, localGlossaries: localGlossaries}, nil
 }
 func (s *Server) TLSReady(ready bool) { s.tls.Store(ready) }
 
@@ -66,6 +67,8 @@ func (s *Server) Handler(game bool) http.Handler {
 		routes.HandleFunc("GET /api/v1/health", s.health)
 		routes.HandleFunc("POST /api/v1/update/check", s.update)
 		routes.HandleFunc("POST /api/v1/update/install", s.update)
+		routes.HandleFunc("GET /api/v1/glossaries", s.readGlossary)
+		routes.HandleFunc("POST /api/v1/glossaries", s.saveGlossary)
 		routes.HandleFunc("POST /api/v1/translate", s.run)
 		routes.HandleFunc("POST /api/v1/test", s.run)
 		routes.HandleFunc("POST /api/v1/translation-preview", s.preview)
@@ -95,6 +98,33 @@ func (s *Server) Handler(game bool) http.Handler {
 		routes.ServeHTTP(w, r)
 	})
 }
+func (s *Server) readGlossary(w http.ResponseWriter, r *http.Request) {
+	if s.localGlossaries == nil {
+		fail(w, 404, "词库管理不可用")
+		return
+	}
+	content, err := s.localGlossaries.Read(r.URL.Query().Get("name"))
+	if err != nil {
+		fail(w, 400, err.Error())
+		return
+	}
+	send(w, 200, map[string]any{"ok": true, "content": content})
+}
+func (s *Server) saveGlossary(w http.ResponseWriter, r *http.Request) {
+	if s.localGlossaries == nil {
+		fail(w, 404, "词库管理不可用")
+		return
+	}
+	var request struct{ Name, Content string }
+	if !decodeLimit(w, r, &request, 3<<20) {
+		return
+	}
+	if err := s.localGlossaries.Save(request.Name, request.Content); err != nil {
+		fail(w, 400, err.Error())
+		return
+	}
+	send(w, 200, map[string]any{"ok": true})
+}
 
 func page(w http.ResponseWriter, b []byte) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -110,11 +140,14 @@ func fail(w http.ResponseWriter, status int, reason string) {
 	send(w, status, map[string]any{"ok": false, "error": reason})
 }
 func decode(w http.ResponseWriter, r *http.Request, out any) bool {
+	return decodeLimit(w, r, out, 64<<10)
+}
+func decodeLimit(w http.ResponseWriter, r *http.Request, out any, limit int64) bool {
 	if !strings.HasPrefix(strings.ToLower(r.Header.Get("Content-Type")), "application/json") {
 		fail(w, 415, "需要 JSON 请求")
 		return false
 	}
-	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10))
+	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, limit))
 	if e := d.Decode(out); e != nil || d.Decode(new(any)) != io.EOF {
 		fail(w, 400, "无效的 JSON 请求")
 		return false
@@ -125,7 +158,12 @@ func decode(w http.ResponseWriter, r *http.Request, out any) bool {
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UnixMilli()
 	nav, fetch := s.nav.Load(), s.fetch.Load()
-	send(w, 200, map[string]any{"ok": true, "version": s.version, "updatesEnabled": s.updates != nil, "providers": provider.List(), "gameRunning": nav != 0 && now-max(nav, fetch) < 60000, "tlsReady": s.tls.Load(), "channels": map[string]any{"now": now, "startedAt": s.started, "byChannel": map[string]int64{"bridgeNav": nav, "gameFetch": fetch}}})
+	send(w, 200, map[string]any{
+		"ok": true, "version": s.version, "updatesEnabled": s.updates != nil,
+		"glossaryVersion": s.engine.GlossaryVersion(),
+		"providers":       provider.List(), "gameRunning": nav != 0 && now-max(nav, fetch) < 60000, "tlsReady": s.tls.Load(),
+		"channels": map[string]any{"now": now, "startedAt": s.started, "byChannel": map[string]int64{"bridgeNav": nav, "gameFetch": fetch}},
+	})
 }
 func (s *Server) getConfig(w http.ResponseWriter, r *http.Request) {
 	snap := s.store.Snapshot()
@@ -165,7 +203,10 @@ func (s *Server) gameState(w http.ResponseWriter, r *http.Request) {
 	s.fetch.Store(time.Now().UnixMilli())
 	switch req.Op {
 	case "get":
-		send(w, 200, map[string]any{"ok": true, "val": s.store.Game(), "chatLog": s.store.Snapshot().Config.ChatLog.Enabled})
+		send(w, 200, map[string]any{
+			"ok": true, "val": s.store.Game(), "chatLog": s.store.Snapshot().Config.ChatLog.Enabled,
+			"glossaryVersion": s.engine.GlossaryVersion(),
+		})
 	case "put":
 		if req.Value == nil {
 			fail(w, 400, "缺少游戏设置")
@@ -286,10 +327,11 @@ type batchItem struct {
 
 func (s *Server) community(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Items  []batchItem
-		Source string `json:"sourceLanguage"`
-		Target string `json:"targetLanguage"`
-		Mode   string
+		Items   []batchItem
+		Source  string `json:"sourceLanguage"`
+		Target  string `json:"targetLanguage"`
+		Mode    string
+		History []provider.ChatMessage `json:"history"`
 	}
 	if !decode(w, r, &req) {
 		return
@@ -313,6 +355,19 @@ func (s *Server) community(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "bad_translation_request")
 		return
 	}
+	if len(req.History) > 10 {
+		fail(w, 400, "bad_chat_context")
+		return
+	}
+	historySize := 0
+	for _, message := range req.History {
+		historySize += settings.Size(message.Text)
+		if (message.Direction != "incoming" && message.Direction != "outgoing") ||
+			strings.TrimSpace(message.Text) == "" || settings.Size(message.Text) > 400 || historySize > 1000 {
+			fail(w, 400, "bad_chat_context")
+			return
+		}
+	}
 	s.fetch.Store(time.Now().UnixMilli())
 	snap := s.store.Snapshot()
 	type outcome struct {
@@ -323,7 +378,7 @@ func (s *Server) community(w http.ResponseWriter, r *http.Request) {
 	var wg sync.WaitGroup
 	for i, item := range req.Items {
 		wg.Go(func() {
-			out, _, err := s.engine.Run(r.Context(), snap, translate.Request{Text: item.Text, Source: req.Source, Target: req.Target, Timeout: 6200, Outgoing: req.Mode == "outgoing"}, nil, false, false)
+			out, _, err := s.engine.Run(r.Context(), snap, translate.Request{Text: item.Text, Source: req.Source, Target: req.Target, Timeout: 6200, Outgoing: req.Mode == "outgoing", History: req.History, Game: true}, nil, false, false)
 			results[i] = outcome{out, err}
 		})
 	}

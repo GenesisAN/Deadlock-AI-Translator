@@ -1,0 +1,63 @@
+{
+  "entries": [
+    {
+      "id": "events.mid_boss_arrived",
+      "category": "events",
+      "en": "Mid-Boss Arrived",
+      "zh": "大龙刷新",
+      "aliases": {
+        "en": [
+          "mid boss respawned"
+        ],
+        "zh": [
+          "大龙复活"
+        ]
+      }
+    },
+    {
+      "id": "events.rejuvenator_drop",
+      "category": "events",
+      "en": "Rejuvenator Drop",
+      "zh": "复生石掉落"
+    },
+    {
+      "id": "events.bridge_buff_here",
+      "category": "events",
+      "en": "Bridge Buff Here",
+      "zh": "桥上增益刷新",
+      "aliases": {
+        "en": [
+          "bridge buff spawned"
+        ],
+        "zh": [
+          "BUFF石刷新"
+        ]
+      }
+    },
+    {
+      "id": "events.urn_arrived",
+      "category": "events",
+      "en": "Urn Arrived",
+      "zh": "灵瓮刷新",
+      "aliases": {
+        "en": [
+          "urn spawned"
+        ],
+        "zh": [
+          "罐子刷新"
+        ]
+      }
+    },
+    {
+      "id": "events.rift_announced",
+      "category": "events",
+      "en": "Rift Announced",
+      "zh": "裂隙刷新",
+      "aliases": {
+        "en": [
+          "rift spawned"
+        ]
+      }
+    }
+  ]
+}

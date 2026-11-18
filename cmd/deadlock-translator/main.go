@@ -54,7 +54,7 @@ func run() error {
 	if legacyEnv := os.Getenv("BABEL_TOWER_CONFIG_DIR"); legacyEnv != "" {
 		legacy = legacyEnv
 	}
-	var initTLS, checkTLS, noAutoCert, showVersion bool
+	var initTLS, checkTLS, noAutoCert, showVersion, collectSamples bool
 	var certPath, certKey string
 	var gamePort int
 	flag.StringVar(&state, "state", state, "本机配置和凭据目录")
@@ -66,6 +66,7 @@ func run() error {
 	flag.BoolVar(&checkTLS, "check-tls", false, "检查本机证书并输出根证书路径")
 	flag.BoolVar(&noAutoCert, "no-auto-cert", false, "使用现有证书，跳过 Windows 自动证书设置")
 	flag.BoolVar(&showVersion, "version", false, "显示程序版本和文件 SHA-256")
+	flag.BoolVar(&collectSamples, "collect-samples", true, "在本机保存游戏内 AI 翻译样本")
 	flag.Parse()
 	certs := filepath.Join(state, "cert-go")
 	if initTLS || checkTLS {
@@ -103,7 +104,7 @@ func run() error {
 		return err
 	}
 	defer store.Close()
-	book, err := translate.NewLexicon(assets.Files, state, legacy)
+	book, err := translate.NewProjectLexicon(assets.Files, state, legacy)
 	if err != nil {
 		return err
 	}
@@ -113,7 +114,16 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	s, err := server.New(store, translate.New(client, book), assets.Files, version+"-go", updates)
+	engine := translate.New(client, book)
+	if collectSamples {
+		engine.SetSampleRecorder(translate.NewSampleRecorder(state))
+		slog.Info("已启用本机 AI 翻译样本记录", "directory", filepath.Join(state, "translation-samples"))
+	}
+	localGlossaries := translate.NewLocalGlossaries(assets.Files, state, legacy, engine)
+	if err := localGlossaries.MigrateContext(store); err != nil {
+		return fmt.Errorf("迁移自定义词库失败: %w", err)
+	}
+	s, err := server.New(store, engine, assets.Files, version+"-go", updates, localGlossaries)
 	if err != nil {
 		return err
 	}

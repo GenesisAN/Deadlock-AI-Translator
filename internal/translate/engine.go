@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -18,19 +19,23 @@ type Translator interface {
 	Translate(context.Context, provider.Preset, provider.Settings, string, provider.Input) (provider.Output, error)
 }
 type Request struct {
-	Text     string `json:"text"`
-	Source   string `json:"sourceLanguage"`
-	Target   string `json:"targetLanguage"`
-	Timeout  int    `json:"timeoutMs"`
-	Outgoing bool   `json:"outgoing"`
+	Text     string                 `json:"text"`
+	Source   string                 `json:"sourceLanguage"`
+	Target   string                 `json:"targetLanguage"`
+	Timeout  int                    `json:"timeoutMs"`
+	Outgoing bool                   `json:"outgoing"`
+	History  []provider.ChatMessage `json:"-"`
+	Game     bool                   `json:"-"`
 }
 type Detail struct {
-	Method    string             `json:"method"`
-	Provider  string             `json:"provider,omitempty"`
-	Text      string             `json:"text,omitempty"`
-	Hints     []string           `json:"hints"`
-	Protected []protected        `json:"protectedTerms"`
-	Messages  []provider.Message `json:"messages,omitempty"`
+	Method     string                   `json:"method"`
+	Provider   string                   `json:"provider,omitempty"`
+	Text       string                   `json:"text,omitempty"`
+	Hints      []string                 `json:"hints"`
+	Terms      []provider.TermReference `json:"terms"`
+	Candidates []string                 `json:"candidates"`
+	Protected  []protected              `json:"protectedTerms"`
+	Messages   []provider.Message       `json:"messages,omitempty"`
 }
 type call struct {
 	done      chan struct{}
@@ -47,6 +52,7 @@ type entry struct {
 
 type Engine struct {
 	network          Translator
+	samples          *SampleRecorder
 	base             *Lexicon
 	mu               sync.Mutex
 	glossary         string
@@ -61,9 +67,33 @@ func New(network Translator, book *Lexicon) *Engine {
 	return &Engine{network: network, base: book, current: book, queue: map[string]*call{}, lru: list.New(), cache: map[string]*list.Element{}}
 }
 
+func (e *Engine) SetSampleRecorder(recorder *SampleRecorder) { e.samples = recorder }
+
+func (e *Engine) officialLexicon() *Lexicon {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.base
+}
+
+func (e *Engine) GlossaryVersion() int {
+	return e.officialLexicon().version
+}
+
+func (e *Engine) setOfficialLexicon(book *Lexicon) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	book.version = e.base.version + 1
+	e.base, e.current = book, book
+	e.lru.Init()
+	e.cache = map[string]*list.Element{}
+	if e.glossary != "" {
+		e.current = book.withGlossary(e.glossary)
+	}
+}
+
 func (e *Engine) lexicon(gloss string, preview bool) *Lexicon {
 	if preview {
-		return e.base.withGlossary(gloss)
+		return e.officialLexicon().withGlossary(gloss)
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -104,7 +134,8 @@ func (e *Engine) Run(parent context.Context, snap settings.Snapshot, req Request
 		}
 	}
 	book := e.lexicon(translationContext.Glossary, override != nil)
-	if !test {
+	primary, _ := provider.Get(c.Provider)
+	if !test && !(primary.AI && book.curatedAlias(req.Text, req.Target)) {
 		if hit := book.lookup(req.Text, req.Source, req.Target); hit != "" {
 			return provider.Output{Translation: hit, Provider: "dictionary"}, &Detail{Method: "dictionary"}, nil
 		}
@@ -128,15 +159,19 @@ func (e *Engine) Run(parent context.Context, snap settings.Snapshot, req Request
 		}
 	}
 	prepare := func(p provider.Preset) (provider.Input, *Detail, preparedText) {
-		prepared := preparedText{Text: req.Text, Hints: []string{}, Protected: []protected{}}
+		prepared := preparedText{Text: req.Text, Hints: []string{}, Terms: []provider.TermReference{}, Candidates: []string{}, Protected: []protected{}}
 		if !test {
 			prepared = book.prepare(req.Text, req.Target, p.AI)
 		}
 		in := provider.Input{
 			Text: prepared.Text, Source: req.Source, Target: req.Target,
-			Prompt: prompt, Hints: prepared.Hints, HasPlaceholders: len(prepared.Protected) > 0,
+			Prompt: prompt, Hints: prepared.Hints, Terms: prepared.Terms,
+			Candidates: prepared.Candidates, HasPlaceholders: len(prepared.Protected) > 0,
 		}
-		d := &Detail{Method: "provider", Provider: p.ID, Text: in.Text, Hints: prepared.Hints, Protected: prepared.Protected}
+		if p.AI {
+			in.History = req.History
+		}
+		d := &Detail{Method: "provider", Provider: p.ID, Text: in.Text, Hints: prepared.Hints, Terms: prepared.Terms, Candidates: prepared.Candidates, Protected: prepared.Protected}
 		if p.AI && override != nil {
 			d.Messages = provider.Messages(in)
 		}
@@ -184,6 +219,15 @@ func (e *Engine) Run(parent context.Context, snap settings.Snapshot, req Request
 			}
 			if err == nil {
 				result.Fallback = i > 0
+				if req.Game && p.AI && e.samples != nil {
+					if saveErr := e.samples.Append(TranslationSample{
+						Direction: direction, Original: req.Text, Source: req.Source, Target: req.Target,
+						Provider: p.ID, Model: c.Providers[id].Model, Fallback: result.Fallback,
+						Messages: provider.Messages(in), Translation: result.Translation,
+					}); saveErr != nil {
+						slog.Warn("无法保存翻译样本", "error", saveErr)
+					}
+				}
 				return result, nil
 			}
 			messages = append(messages, id+": "+err.Error())
@@ -201,7 +245,14 @@ func (e *Engine) Run(parent context.Context, snap settings.Snapshot, req Request
 		result, err := work(ctx)
 		return result, detail, err
 	}
-	raw, _ := json.Marshal([]any{snap.Revision, req.Text, req.Source, req.Target, req.Outgoing})
+	var historyKey []provider.ChatMessage
+	for _, id := range ids {
+		if preset, ok := provider.Get(id); ok && preset.AI {
+			historyKey = req.History
+			break
+		}
+	}
+	raw, _ := json.Marshal([]any{snap.Revision, book.version, fmt.Sprintf("%p", book), req.Text, req.Source, req.Target, req.Outgoing, historyKey})
 	key := string(raw)
 	e.mu.Lock()
 	if el := e.cache[key]; el != nil {

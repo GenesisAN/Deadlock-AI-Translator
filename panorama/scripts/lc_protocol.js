@@ -86,6 +86,7 @@
 	let queue = [];               // tr + store 队列
 	const chatLogs = [];
 	let chatLogEnabled = false;
+	let glossaryVersion = 0;
 	let trTimeouts = 0;           // 连续 tr 超时计数
 	let helloTries = 0;
 	let offlineWait = 2;
@@ -707,6 +708,7 @@
 		if (item.kind === "store.get" && item.k === "cfg") {
 			chatLogEnabled = obj.chatLog === true;
 			if (!chatLogEnabled) chatLogs.length = 0;
+			glossaryVersion = obj.glossaryVersion || 0;
 		}
 		safeCb(item.cb, obj);
 		pumpQueue();
@@ -951,7 +953,8 @@
 			target: String(opts.target || "zh-Hans"),
 			source: String(opts.source || "auto"),
 			mode: String(opts.mode || "incoming"),
-			items: norm
+			items: norm,
+			history: Array.isArray(opts.history) ? opts.history.slice(0, 10) : []
 		};
 		enqueue({ kind: "tr", d: d, cb: cb, enqueuedAt: nowMs(), r: 0 });
 		pumpQueue();
@@ -978,6 +981,7 @@
 			reportChat: reportChat,
 			isPrimary: function () { return elect === "primary"; },
 			getCfg: function () { return cfgObj || CFG_DEFAULTS; },
+			getGlossaryVersion: function () { return glossaryVersion; },
 			toggleOutgoing: toggleOutgoing,
 			snapshot: function () {
 				return { elect: elect, state: state, buildId: buildId, chunkSize: chunkSize(), storeOk: storeOk, queued: queue.length };

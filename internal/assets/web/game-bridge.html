@@ -188,7 +188,8 @@
 			sourceLanguage: data.source,
 			targetLanguage: data.target,
 			mode: data.mode,
-			items: data.items
+			items: data.items,
+			history: data.history || []
 		});
 		fetchX("POST", "/api/v1/community-translate", body, { "Content-Type": "application/json", "X-Deadlock-Bridge": "1" }, TOTAL_BUDGET, function (err, text) {
 			if (err) { sendErr(r.id, "PROVIDER_DOWN", err); return; }

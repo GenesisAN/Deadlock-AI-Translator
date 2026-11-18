@@ -62,3 +62,49 @@ func TestEnginePlaceholders(t *testing.T) {
 		})
 	}
 }
+
+func TestChatHistoryReachesAIAndSeparatesCacheEntries(t *testing.T) {
+	book := (&Lexicon{}).withGlossary("")
+	var inputs []provider.Input
+	engine := New(translatorFunc(func(in provider.Input) provider.Output {
+		inputs = append(inputs, in)
+		return provider.Output{Translation: "go mid"}
+	}), book)
+	snap := settings.Snapshot{Config: settings.Config{
+		Provider: "compatible", Timeout: 5000, MaxConcurrent: 2,
+		Languages: settings.Languages{Source: "zh-Hans", Target: "en"},
+	}}
+	first := []provider.ChatMessage{{Direction: "incoming", Text: "猪在中路"}, {Direction: "outgoing", Text: "我去抓他"}}
+	second := []provider.ChatMessage{{Direction: "incoming", Text: "羊在中路"}}
+	for _, history := range [][]provider.ChatMessage{first, second, first} {
+		if _, _, err := engine.Run(context.Background(), snap, Request{Text: "来了", History: history}, nil, false, false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(inputs) != 2 || len(inputs[0].History) != 2 || inputs[0].History[0].Text != "猪在中路" || inputs[1].History[0].Text != "羊在中路" {
+		t.Fatalf("history did not reach AI or separate cached translations: %+v", inputs)
+	}
+	messages := provider.Messages(inputs[0])
+	if len(messages) != 2 || messages[1].Content != "来了" || !strings.Contains(messages[0].Content, `"direction":"incoming","text":"猪在中路"`) ||
+		!strings.Contains(messages[0].Content, "translate only the current user message") {
+		t.Fatalf("AI message mixed history and current text: %+v", messages)
+	}
+	snap.Config.Provider = "bing"
+	plainCalls := 0
+	plain := New(translatorFunc(func(in provider.Input) provider.Output {
+		plainCalls++
+		if len(in.History) != 0 {
+			t.Errorf("literal provider received AI history: %+v", in.History)
+		}
+		return provider.Output{Translation: "go mid"}
+	}), book)
+	if _, _, err := plain.Run(context.Background(), snap, Request{Text: "来了", History: first}, nil, false, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := plain.Run(context.Background(), snap, Request{Text: "来了", History: second}, nil, false, false); err != nil {
+		t.Fatal(err)
+	}
+	if plainCalls != 1 {
+		t.Fatalf("literal provider cache depended on unused history: %d calls", plainCalls)
+	}
+}

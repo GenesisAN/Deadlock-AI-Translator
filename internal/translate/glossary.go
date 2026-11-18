@@ -3,7 +3,6 @@ package translate
 import (
 	"encoding/json"
 	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -13,135 +12,47 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"deadlocktranslator/internal/provider"
 	"deadlocktranslator/internal/settings"
 )
 
 type dictionary map[string]map[string]string
-type glossaryRow struct {
-	En, Zh  string
-	Aliases map[string][]struct{ Text string }
+type userDictionary struct {
+	User    dictionary `json:"user"`
+	Learned dictionary `json:"learned"`
 }
-
-type pack struct {
-	User     dictionary
-	Learned  dictionary
-	Glossary struct {
-		Heroes, Items, Terms, Abilities []glossaryRow
-		Ambiguities                     []struct {
-			Text, Language, Note string
-			Meanings             []string
-		}
-	}
-}
-type term struct{ match, en, zh, reading string }
+type term struct{ match, en, zh, reading, id string }
 type Lexicon struct {
-	custom, builtin, game, user, learned dictionary
-	base                                 map[string]term
-	ambiguous                            map[string]bool
-	matcher                              map[rune][]term
+	version                     int
+	personal                    string
+	custom, game, user, learned dictionary
+	base                        map[string]term
+	ambiguous                   map[string]bool
+	aliases                     map[string]string
+	entries                     map[string]GlossaryEntry
+	matcher                     map[rune][]term
 }
 
-func load(files fs.FS, name string, dst any) error {
-	b, e := fs.ReadFile(files, name)
-	if e != nil {
-		return e
-	}
-	return json.Unmarshal(b, dst)
-}
-
-func NewLexicon(assets fs.FS, dir, legacyDir string) (*Lexicon, error) {
-	l := &Lexicon{base: map[string]term{}, ambiguous: map[string]bool{}}
-	var game, builtin, user pack
-	official := map[string]string{}
-	if e := load(assets, "dictionaries/deadlock.zh-en.json", &game); e != nil {
-		return nil, e
-	}
-	if e := load(assets, "dictionaries/builtin.json", &builtin); e != nil {
-		return nil, e
-	}
-	if e := load(assets, "dictionaries/gamenames.json", &official); e != nil {
-		return nil, e
-	}
+func loadUserDictionary(dir, legacyDir string) (userDictionary, error) {
+	var user userDictionary
 	for _, p := range []string{filepath.Join(dir, "dictionary.json"), filepath.Join(legacyDir, "dictionary.json")} {
 		b, e := os.ReadFile(p)
 		if errors.Is(e, os.ErrNotExist) {
 			continue
 		}
 		if e != nil {
-			return nil, e
+			return user, e
 		}
 		if len(b) > 2<<20 {
-			return nil, errors.New("dictionary.json 超过 2 MiB")
+			return user, errors.New("dictionary.json 超过 2 MiB")
 		}
 		if e = json.Unmarshal(b, &user); e != nil {
-			return nil, e
+			return user, e
 		}
 		break
 	}
-	l.game, l.builtin, l.user, l.learned = normalizedBook(game.User), normalizedBook(builtin.User), normalizedBook(user.User), normalizedBook(user.Learned)
-	add := func(alias, en, zh string) {
-		k := normalize(alias)
-		if k == "" || en == "" || zh == "" {
-			return
-		}
-		if _, ok := l.base[k]; !ok {
-			l.base[k] = term{match: k, en: en, zh: zh}
-		}
-	}
-	for _, rows := range [][]glossaryRow{game.Glossary.Heroes, game.Glossary.Items, game.Glossary.Terms} {
-		for _, e := range rows {
-			add(e.En, e.En, e.Zh)
-			add(e.Zh, e.En, e.Zh)
-		}
-	}
-	for _, rows := range [][]glossaryRow{game.Glossary.Heroes, game.Glossary.Items, game.Glossary.Terms} {
-		for _, e := range rows {
-			for _, lang := range []string{"en", "zh"} {
-				for _, a := range e.Aliases[lang] {
-					if lang == "en" && settings.Size(a.Text) < 3 && normalize(a.Text) != "cd" {
-						continue
-					}
-					other := "en"
-					if lang == "en" {
-						other = "zh"
-					}
-					if l.game[other][normalize(a.Text)] != "" {
-						add(a.Text, e.En, e.Zh)
-					}
-				}
-			}
-		}
-	}
-	keys := make([]string, 0, len(official))
-	for en := range official {
-		keys = append(keys, en)
-	}
-	sort.Strings(keys)
-	for _, en := range keys {
-		zh := official[en]
-		if en != "english" && en != "schinese" {
-			add(en, en, zh)
-			add(zh, en, zh)
-		}
-	}
-	for _, a := range game.Glossary.Ambiguities {
-		key := normalize(a.Text)
-		if key == "" || len(a.Meanings) < 2 {
-			continue
-		}
-		l.ambiguous[key] = true
-		l.base[key] = term{match: key, reading: strings.Join(a.Meanings, " / ") + "。" + a.Note}
-	}
-	l.base["卡牌"] = term{match: "卡牌", reading: "Wraith when targeting a hero (kill/focus); Card Trick when discussing the ability"}
-	l.base["tp"] = term{match: "tp", reading: "teleport in a movement callout; Torment Pulse in an item build"}
-	l.base["kd"] = term{match: "kd", reading: "Knockdown (anti-air), Kinetic Dash (movement/item build), or kill/death ratio (score)"}
-	for _, key := range []string{"卡牌", "tp", "kd"} {
-		l.ambiguous[key] = true
-	}
-	if strings.EqualFold(os.Getenv("BABEL_TOWER_DICT_ENABLED"), "false") {
-		l.game, l.builtin, l.user, l.learned = nil, nil, nil, nil
-	}
-	return l.withGlossary(""), nil
+	user.User, user.Learned = normalizedBook(user.User), normalizedBook(user.Learned)
+	return user, nil
 }
 
 func normalizedBook(book dictionary) dictionary {
@@ -178,7 +89,7 @@ func (l *Lexicon) withGlossary(gloss string) *Lexicon {
 	for key, t := range l.base {
 		unique[key] = t
 	}
-	for _, line := range strings.Split(gloss, "\n") {
+	for _, line := range strings.Split(strings.TrimSpace(gloss+"\n"+l.personal), "\n") {
 		en, zh, ok := strings.Cut(line, "=")
 		if !ok || strings.TrimSpace(en) == "" || strings.TrimSpace(zh) == "" {
 			continue
@@ -213,7 +124,7 @@ func (l *Lexicon) lookup(s, src, dst string) string {
 		if key == "" {
 			continue
 		}
-		for _, d := range []dictionary{l.custom, l.user, l.game, l.builtin, l.learned} {
+		for _, d := range []dictionary{l.custom, l.user, l.game, l.learned} {
 			if l.ambiguous[key] && d != nil {
 				if v := l.custom[target][key]; v != "" {
 					return v
@@ -236,9 +147,11 @@ type protected struct {
 	Translation string `json:"translation"`
 }
 type preparedText struct {
-	Text      string
-	Hints     []string
-	Protected []protected
+	Text       string
+	Hints      []string
+	Terms      []provider.TermReference
+	Candidates []string
+	Protected  []protected
 }
 
 var tokens = regexp.MustCompile(`(?i)LCTPH\s*([0-9]+)`)
@@ -249,6 +162,29 @@ func boundary(text, key string, i int) bool {
 	end := i + len(key)
 	return !(i > 0 && asciiWord(key[0]) && asciiWord(text[i-1])) &&
 		!(end < len(text) && asciiWord(key[len(key)-1]) && asciiWord(text[end]))
+}
+
+func embeddedSingleHanHeroAlias(text string, i int, match term, entries map[string]GlossaryEntry) bool {
+	entry, ok := entries[match.id]
+	if !ok || entry.Category != "heroes" || utf8.RuneCountInString(match.match) != 1 {
+		return false
+	}
+	r, _ := utf8.DecodeRuneInString(match.match)
+	if !unicode.Is(unicode.Han, r) {
+		return false
+	}
+	end := i + len(match.match)
+	if i > 0 {
+		previous, _ := utf8.DecodeLastRuneInString(text[:i])
+		if unicode.Is(unicode.Han, previous) {
+			return true
+		}
+	}
+	if end < len(text) {
+		next, _ := utf8.DecodeRuneInString(text[end:])
+		return unicode.Is(unicode.Han, next)
+	}
+	return false
 }
 
 // Map the normalized search bytes back onto the original input. Translation keeps the original spelling and spacing outside matches.
@@ -279,7 +215,7 @@ func searchText(text string) (string, []int) {
 }
 
 func (l *Lexicon) prepare(text, target string, ai bool) preparedText {
-	p := preparedText{Text: text, Hints: []string{}, Protected: []protected{}}
+	p := preparedText{Text: text, Hints: []string{}, Terms: []provider.TermReference{}, Candidates: []string{}, Protected: []protected{}}
 	if tokens.MatchString(text) {
 		return p
 	}
@@ -289,9 +225,12 @@ func (l *Lexicon) prepare(text, target string, ai bool) preparedText {
 	}
 	search, index := searchText(text)
 	var out strings.Builder
+	var unmatched strings.Builder
 	cursor := 0
+	unmatchedCursor := 0
 	seen := map[string]bool{}
 	hintBudget := 450
+	termBudget := 900
 	for i := 0; i < len(search); {
 		r, n := utf8.DecodeRuneInString(search[i:])
 		match := term{}
@@ -305,17 +244,52 @@ func (l *Lexicon) prepare(text, target string, ai bool) preparedText {
 			i += n
 			continue
 		}
+		// A one-character hero nickname inside Chinese text is only a possible
+		// reading. Keep the full sentence intact so AI can choose its meaning.
+		if embeddedSingleHanHeroAlias(search, i, match, l.entries) {
+			if ai && !seen[match.match] && len(p.Candidates) < 8 {
+				entry := l.entries[match.id]
+				p.Candidates = append(p.Candidates, match.match+" = [possible hero] "+entry.En+" / "+entry.Zh)
+				seen[match.match] = true
+			}
+			i += n
+			continue
+		}
 		end := i + len(match.match)
 		original := text[index[i]:index[end]]
+		aliasHintOnly := ai && l.curatedAlias(match.match, target)
+		if match.reading == "" {
+			unmatched.WriteString(text[unmatchedCursor:index[i]])
+			unmatchedCursor = index[end]
+		}
 		label := match.en
 		if code == "zh" {
 			label = match.zh
 		}
+		entry, structured := l.entries[match.id]
+		if ai && structured && !seen[match.match] && len(p.Terms) < 8 {
+			ref := provider.TermReference{
+				Matched: original, ID: entry.ID, Category: entry.Category,
+				En: entry.En, Zh: entry.Zh, Aliases: entry.Aliases,
+			}
+			for _, alias := range entry.KeepAliases {
+				if normalize(alias) == match.match {
+					ref.KeepOriginal = true
+					break
+				}
+			}
+			encoded, _ := json.Marshal(ref)
+			if n := settings.Size(string(encoded)); n <= termBudget {
+				p.Terms = append(p.Terms, ref)
+				termBudget -= n + 1
+				seen[match.match] = true
+			}
+		}
 		hint := match.reading
-		if hint == "" && label != "" && normalize(label) != match.match {
+		if !structured && hint == "" && label != "" && normalize(label) != match.match {
 			hint = label
 		}
-		if ai && hint != "" && !seen[match.match] && len(p.Hints) < 8 {
+		if ai && !structured && hint != "" && !seen[match.match] && len(p.Hints) < 8 {
 			line := original + " = " + hint
 			if n := settings.Size(line); n <= hintBudget {
 				p.Hints = append(p.Hints, line)
@@ -323,7 +297,7 @@ func (l *Lexicon) prepare(text, target string, ai bool) preparedText {
 				seen[match.match] = true
 			}
 		}
-		if match.reading == "" && label != "" && len(p.Protected) < 32 {
+		if !aliasHintOnly && match.reading == "" && label != "" && len(p.Protected) < 32 {
 			t := "LCTPH" + strconv.Itoa(len(p.Protected))
 			out.WriteString(text[cursor:index[i]])
 			out.WriteString(t)
@@ -335,6 +309,13 @@ func (l *Lexicon) prepare(text, target string, ai bool) preparedText {
 	if len(p.Protected) > 0 {
 		out.WriteString(text[cursor:])
 		p.Text = out.String()
+	}
+	if ai {
+		unmatched.WriteString(text[unmatchedCursor:])
+		p.Candidates = append(p.Candidates, l.candidateHints(unmatched.String(), code)...)
+		if len(p.Candidates) > 8 {
+			p.Candidates = p.Candidates[:8]
+		}
 	}
 	return p
 }

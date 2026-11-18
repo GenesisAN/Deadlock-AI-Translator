@@ -1,0 +1,105 @@
+{
+  "entries": [
+    {
+      "id": "chat-abbreviations.gg",
+      "category": "chat-abbreviations",
+      "en": "gg",
+      "zh": "好局"
+    },
+    {
+      "id": "chat-abbreviations.wp",
+      "category": "chat-abbreviations",
+      "en": "wp",
+      "zh": "打得好"
+    },
+    {
+      "id": "chat-abbreviations.glhf",
+      "category": "chat-abbreviations",
+      "en": "glhf",
+      "zh": "祝好运，玩得开心"
+    },
+    {
+      "id": "chat-abbreviations.nt",
+      "category": "chat-abbreviations",
+      "en": "nt",
+      "zh": "尽力了"
+    },
+    {
+      "id": "chat-abbreviations.mb",
+      "category": "chat-abbreviations",
+      "en": "mb",
+      "zh": "我的错"
+    },
+    {
+      "id": "chat-abbreviations.ty",
+      "category": "chat-abbreviations",
+      "en": "ty",
+      "zh": "谢谢",
+      "aliases": {
+        "en": [
+          "thx"
+        ]
+      }
+    },
+    {
+      "id": "chat-abbreviations.np",
+      "category": "chat-abbreviations",
+      "en": "np",
+      "zh": "没事"
+    },
+    {
+      "id": "chat-abbreviations.brb",
+      "category": "chat-abbreviations",
+      "en": "brb",
+      "zh": "马上回来"
+    },
+    {
+      "id": "chat-abbreviations.afk",
+      "category": "chat-abbreviations",
+      "en": "afk",
+      "zh": "暂离"
+    },
+    {
+      "id": "chat-abbreviations.omw",
+      "category": "chat-abbreviations",
+      "en": "omw",
+      "zh": "我在路上"
+    },
+    {
+      "id": "chat-abbreviations.mia",
+      "category": "chat-abbreviations",
+      "en": "mia",
+      "zh": "敌人不见了"
+    },
+    {
+      "id": "chat-abbreviations.lfg",
+      "category": "chat-abbreviations",
+      "en": "lfg",
+      "zh": "找队友"
+    },
+    {
+      "id": "chat-abbreviations.lol",
+      "category": "chat-abbreviations",
+      "en": "lol",
+      "zh": "哈哈"
+    },
+    {
+      "id": "chat-abbreviations.idk",
+      "category": "chat-abbreviations",
+      "en": "idk",
+      "zh": "不知道"
+    },
+    {
+      "id": "chat-abbreviations.imo",
+      "category": "chat-abbreviations",
+      "en": "imo",
+      "zh": "我觉得"
+    },
+    {
+      "id": "chat-abbreviations.btw",
+      "category": "chat-abbreviations",
+      "en": "btw",
+      "zh": "顺便说一下"
+    }
+  ]
+}

@@ -1,0 +1,958 @@
+{
+  "entries": [
+    {
+      "id": "upgrade_close_range",
+      "category": "equipment",
+      "en": "Close Quarters",
+      "zh": "近身决斗"
+    },
+    {
+      "id": "upgrade_clip_size",
+      "category": "equipment",
+      "en": "Extended Magazine",
+      "zh": "扩容弹匣"
+    },
+    {
+      "id": "upgrade_headshot_booster",
+      "category": "equipment",
+      "en": "Headshot Booster",
+      "zh": "头弹奖励"
+    },
+    {
+      "id": "upgrade_high_velocity_mag",
+      "category": "equipment",
+      "en": "High-Velocity Rounds",
+      "zh": "高速弹"
+    },
+    {
+      "id": "upgrade_non_player_bonus",
+      "category": "equipment",
+      "en": "Monster Rounds",
+      "zh": "猎怪弹"
+    },
+    {
+      "id": "upgrade_rapid_rounds",
+      "category": "equipment",
+      "en": "Rapid Rounds",
+      "zh": "快手连发"
+    },
+    {
+      "id": "upgrade_medic_bullets",
+      "category": "equipment",
+      "en": "Restorative Shot",
+      "zh": "疗愈子弹"
+    },
+    {
+      "id": "upgrade_active_reload",
+      "category": "equipment",
+      "en": "Active Reload",
+      "zh": "高速装填"
+    },
+    {
+      "id": "upgrade_fleetfoot_boots",
+      "category": "equipment",
+      "en": "Fleetfoot",
+      "zh": "轻盈飞步"
+    },
+    {
+      "id": "upgrade_intensifying_clip",
+      "category": "equipment",
+      "en": "Intensifying Magazine",
+      "zh": "火力渐升"
+    },
+    {
+      "id": "upgrade_kinetic_sash",
+      "category": "equipment",
+      "en": "Kinetic Dash",
+      "zh": "动能冲刺"
+    },
+    {
+      "id": "upgrade_long_range",
+      "category": "equipment",
+      "en": "Long Range",
+      "zh": "远击威力"
+    },
+    {
+      "id": "upgrade_melee_charge",
+      "category": "equipment",
+      "en": "Melee Charge",
+      "zh": "近战蓄力"
+    },
+    {
+      "id": "upgrade_crackshot",
+      "category": "equipment",
+      "en": "Mystic Shot",
+      "zh": "秘术射击"
+    },
+    {
+      "id": "upgrade_pristine_emblem",
+      "category": "equipment",
+      "en": "Opening Rounds",
+      "zh": "先发强袭"
+    },
+    {
+      "id": "upgrade_rechargingbullets",
+      "category": "equipment",
+      "en": "Recharging Rush",
+      "zh": "能量迸发"
+    },
+    {
+      "id": "upgrade_slowing_bullets",
+      "category": "equipment",
+      "en": "Slowing Bullets",
+      "zh": "减速弹"
+    },
+    {
+      "id": "upgrade_tech_defense_shredders",
+      "category": "equipment",
+      "en": "Spirit Shredder",
+      "zh": "碎灵子弹"
+    },
+    {
+      "id": "upgrade_split_shot",
+      "category": "equipment",
+      "en": "Split Shot",
+      "zh": "裂光射击"
+    },
+    {
+      "id": "upgrade_weapon_backstabber",
+      "category": "equipment",
+      "en": "Stalker",
+      "zh": "追猎"
+    },
+    {
+      "id": "upgrade_blitz_bullets",
+      "category": "equipment",
+      "en": "Swift Striker",
+      "zh": "迅捷突击"
+    },
+    {
+      "id": "upgrade_titan_round",
+      "category": "equipment",
+      "en": "Titanic Magazine",
+      "zh": "巨型弹匣"
+    },
+    {
+      "id": "upgrade_headshot_booster2",
+      "category": "equipment",
+      "en": "Weakening Headshot",
+      "zh": "头弹弱防"
+    },
+    {
+      "id": "upgrade_thermal_detonator",
+      "category": "equipment",
+      "en": "Alchemical Fire",
+      "zh": "炼金之火"
+    },
+    {
+      "id": "upgrade_bulletshredimbue",
+      "category": "equipment",
+      "en": "Ballistic Enchantment",
+      "zh": "弹道附魔"
+    },
+    {
+      "id": "upgrade_berserker",
+      "category": "equipment",
+      "en": "Berserker",
+      "zh": "狂战士"
+    },
+    {
+      "id": "upgrade_blood_tribute",
+      "category": "equipment",
+      "en": "Blood Tribute",
+      "zh": "殷红贡礼"
+    },
+    {
+      "id": "upgrade_burst_fire",
+      "category": "equipment",
+      "en": "Burst Fire",
+      "zh": "健步疾射"
+    },
+    {
+      "id": "upgrade_non_player_bonus_sacrifice",
+      "category": "equipment",
+      "en": "Cultist Sacrifice",
+      "zh": "特异供奉"
+    },
+    {
+      "id": "upgrade_reinforcing_casings",
+      "category": "equipment",
+      "en": "Escalating Resilience",
+      "zh": "层层防御"
+    },
+    {
+      "id": "upgrade_express_shot",
+      "category": "equipment",
+      "en": "Express Shot",
+      "zh": "疾速射击"
+    },
+    {
+      "id": "upgrade_headhunter",
+      "category": "equipment",
+      "en": "Headhunter",
+      "zh": "猎头"
+    },
+    {
+      "id": "upgrade_dps_aura",
+      "category": "equipment",
+      "en": "Heroic Aura",
+      "zh": "英雄光环"
+    },
+    {
+      "id": "upgrade_hollow_point_rounds",
+      "category": "equipment",
+      "en": "Hollow Point",
+      "zh": "空尖弹"
+    },
+    {
+      "id": "upgrade_bullet_armor_reduction_aura",
+      "category": "equipment",
+      "en": "Hunter's Aura",
+      "zh": "猎人光环"
+    },
+    {
+      "id": "upgrade_close_quarter_combat",
+      "category": "equipment",
+      "en": "Point Blank",
+      "zh": "近身猛击"
+    },
+    {
+      "id": "upgrade_cloaking_device_active",
+      "category": "equipment",
+      "en": "Shadow Weave",
+      "zh": "来去无踪"
+    },
+    {
+      "id": "upgrade_sharpshooter",
+      "category": "equipment",
+      "en": "Sharpshooter",
+      "zh": "弹无虚发"
+    },
+    {
+      "id": "upgrade_spellslinger_headshots",
+      "category": "equipment",
+      "en": "Spirit Rend",
+      "zh": "元灵撕裂"
+    },
+    {
+      "id": "upgrade_chain_lightning",
+      "category": "equipment",
+      "en": "Tesla Bullets",
+      "zh": "特斯拉弹"
+    },
+    {
+      "id": "upgrade_toxic_bullets",
+      "category": "equipment",
+      "en": "Toxic Bullets",
+      "zh": "毒弹"
+    },
+    {
+      "id": "upgrade_weighted_shots",
+      "category": "equipment",
+      "en": "Weighted Shots",
+      "zh": "重压射击"
+    },
+    {
+      "id": "upgrade_aprounds",
+      "category": "equipment",
+      "en": "Armor Piercer",
+      "zh": "穿甲弹"
+    },
+    {
+      "id": "upgrade_capacitor",
+      "category": "equipment",
+      "en": "Capacitor",
+      "zh": "积雷电容"
+    },
+    {
+      "id": "upgrade_banshee_slugs",
+      "category": "equipment",
+      "en": "Crippling Headshot",
+      "zh": "头弹破防"
+    },
+    {
+      "id": "upgrade_crushing_fists",
+      "category": "equipment",
+      "en": "Crushing Fists",
+      "zh": "粉碎重拳"
+    },
+    {
+      "id": "upgrade_fervor",
+      "category": "equipment",
+      "en": "Frenzy",
+      "zh": "狂乱"
+    },
+    {
+      "id": "upgrade_glass_cannon",
+      "category": "equipment",
+      "en": "Glass Cannon",
+      "zh": "玻璃大炮"
+    },
+    {
+      "id": "upgrade_critshot",
+      "category": "equipment",
+      "en": "Lucky Shot",
+      "zh": "幸运一击"
+    },
+    {
+      "id": "upgrade_ricochet",
+      "category": "equipment",
+      "en": "Ricochet",
+      "zh": "跳弹射击"
+    },
+    {
+      "id": "upgrade_proc_silence",
+      "category": "equipment",
+      "en": "Silencer",
+      "zh": "沉默子弹"
+    },
+    {
+      "id": "upgrade_enchanted_holsters",
+      "category": "equipment",
+      "en": "Spellslinger",
+      "zh": "施术之手"
+    },
+    {
+      "id": "upgrade_tech_overflow",
+      "category": "equipment",
+      "en": "Spiritual Overflow",
+      "zh": "元灵漫溢"
+    },
+    {
+      "id": "upgrade_health",
+      "category": "equipment",
+      "en": "Extra Health",
+      "zh": "额外生命"
+    },
+    {
+      "id": "upgrade_endurance",
+      "category": "equipment",
+      "en": "Extra Regen",
+      "zh": "加速回复"
+    },
+    {
+      "id": "upgrade_improved_stamina",
+      "category": "equipment",
+      "en": "Extra Stamina",
+      "zh": "耐力补给"
+    },
+    {
+      "id": "upgrade_grit",
+      "category": "equipment",
+      "en": "Grit",
+      "zh": "刚毅"
+    },
+    {
+      "id": "upgrade_health_stimpak",
+      "category": "equipment",
+      "en": "Healing Rite",
+      "zh": "治疗仪式"
+    },
+    {
+      "id": "upgrade_lifestrike_gauntlets",
+      "category": "equipment",
+      "en": "Melee Lifesteal",
+      "zh": "近战疗法"
+    },
+    {
+      "id": "upgrade_melee_rebuttal",
+      "category": "equipment",
+      "en": "Rebuttal",
+      "zh": "对等还击"
+    },
+    {
+      "id": "upgrade_sprint_booster",
+      "category": "equipment",
+      "en": "Sprint Boots",
+      "zh": "疾跑靴"
+    },
+    {
+      "id": "upgrade_regenerating_bullet_shield",
+      "category": "equipment",
+      "en": "Battle Vest",
+      "zh": "战斗背心"
+    },
+    {
+      "id": "upgrade_vampire",
+      "category": "equipment",
+      "en": "Bullet Lifesteal",
+      "zh": "子弹回复"
+    },
+    {
+      "id": "upgrade_debuff_reducer",
+      "category": "equipment",
+      "en": "Debuff Reducer",
+      "zh": "减益缩短"
+    },
+    {
+      "id": "upgrade_magic_shield",
+      "category": "equipment",
+      "en": "Enchanter's Emblem",
+      "zh": "附魔师纹章"
+    },
+    {
+      "id": "upgrade_cardio_calibrator",
+      "category": "equipment",
+      "en": "Enduring Speed",
+      "zh": "疾速不怠"
+    },
+    {
+      "id": "upgrade_guardian_ward",
+      "category": "equipment",
+      "en": "Guardian Ward",
+      "zh": "护卫结界"
+    },
+    {
+      "id": "upgrade_healbane",
+      "category": "equipment",
+      "en": "Healbane",
+      "zh": "不治魔咒"
+    },
+    {
+      "id": "upgrade_healing_booster",
+      "category": "equipment",
+      "en": "Healing Booster",
+      "zh": "治疗强化"
+    },
+    {
+      "id": "upgrade_vex_barrier",
+      "category": "equipment",
+      "en": "Reactive Barrier",
+      "zh": "应急屏障"
+    },
+    {
+      "id": "upgrade_restorative_locket",
+      "category": "equipment",
+      "en": "Restorative Locket",
+      "zh": "疗愈护符"
+    },
+    {
+      "id": "upgrade_return_fire",
+      "category": "equipment",
+      "en": "Return Fire",
+      "zh": "回应射击"
+    },
+    {
+      "id": "upgrade_health_stealing_magic",
+      "category": "equipment",
+      "en": "Spirit Lifesteal",
+      "zh": "元灵吸收"
+    },
+    {
+      "id": "upgrade_spirit_bubble",
+      "category": "equipment",
+      "en": "Spirit Shielding",
+      "zh": "元灵防护"
+    },
+    {
+      "id": "upgrade_trophy_collector",
+      "category": "equipment",
+      "en": "Trophy Collector",
+      "zh": "寻猎季节"
+    },
+    {
+      "id": "upgrade_weapon_shielding",
+      "category": "equipment",
+      "en": "Weapon Shielding",
+      "zh": "武器防护"
+    },
+    {
+      "id": "upgrade_improved_bullet_armor",
+      "category": "equipment",
+      "en": "Bullet Resilience",
+      "zh": "子弹坚甲"
+    },
+    {
+      "id": "upgrade_counterspell",
+      "category": "equipment",
+      "en": "Counterspell",
+      "zh": "法术反制"
+    },
+    {
+      "id": "upgrade_reduce_debuff_duration",
+      "category": "equipment",
+      "en": "Dispel Magic",
+      "zh": "驱散魔法"
+    },
+    {
+      "id": "upgrade_chonky",
+      "category": "equipment",
+      "en": "Fortitude",
+      "zh": "坚毅之心"
+    },
+    {
+      "id": "upgrade_fury_trance",
+      "category": "equipment",
+      "en": "Fury Trance",
+      "zh": "怒意之潮"
+    },
+    {
+      "id": "upgrade_health_nova",
+      "category": "equipment",
+      "en": "Healing Nova",
+      "zh": "治疗之环"
+    },
+    {
+      "id": "upgrade_boxing_glove",
+      "category": "equipment",
+      "en": "Lifestrike",
+      "zh": "生命打击"
+    },
+    {
+      "id": "upgrade_rocket_booster",
+      "category": "equipment",
+      "en": "Majestic Leap",
+      "zh": "升空飞跃"
+    },
+    {
+      "id": "upgrade_metal_skin",
+      "category": "equipment",
+      "en": "Metal Skin",
+      "zh": "铜皮铁骨"
+    },
+    {
+      "id": "upgrade_rescue_beam",
+      "category": "equipment",
+      "en": "Rescue Beam",
+      "zh": "营救光束"
+    },
+    {
+      "id": "upgrade_tech_purge",
+      "category": "equipment",
+      "en": "Spirit Resilience",
+      "zh": "元灵护体"
+    },
+    {
+      "id": "upgrade_superior_stamina",
+      "category": "equipment",
+      "en": "Stamina Mastery",
+      "zh": "跑酷大师"
+    },
+    {
+      "id": "upgrade_veil_walker",
+      "category": "equipment",
+      "en": "Veil Walker",
+      "zh": "穿幕行者"
+    },
+    {
+      "id": "upgrade_warp_stone",
+      "category": "equipment",
+      "en": "Warp Stone",
+      "zh": "传送石"
+    },
+    {
+      "id": "upgrade_cheat_death",
+      "category": "equipment",
+      "en": "Cheat Death",
+      "zh": "幸免于难"
+    },
+    {
+      "id": "upgrade_colossus",
+      "category": "equipment",
+      "en": "Colossus",
+      "zh": "巨人"
+    },
+    {
+      "id": "upgrade_divine_barrier",
+      "category": "equipment",
+      "en": "Divine Barrier",
+      "zh": "神圣屏障"
+    },
+    {
+      "id": "upgrade_diviners_kevlar",
+      "category": "equipment",
+      "en": "Diviner's Kevlar",
+      "zh": "金刚宝衫"
+    },
+    {
+      "id": "upgrade_healbuff",
+      "category": "equipment",
+      "en": "Healing Tempo",
+      "zh": "治疗律动"
+    },
+    {
+      "id": "upgrade_auto_cleanse",
+      "category": "equipment",
+      "en": "Indomitable",
+      "zh": "不屈之志"
+    },
+    {
+      "id": "upgrade_infuser",
+      "category": "equipment",
+      "en": "Infuser",
+      "zh": "灵力灌注"
+    },
+    {
+      "id": "upgrade_inhibitor",
+      "category": "equipment",
+      "en": "Inhibitor",
+      "zh": "抑制术"
+    },
+    {
+      "id": "upgrade_juggernaut",
+      "category": "equipment",
+      "en": "Juggernaut",
+      "zh": "破阵之势"
+    },
+    {
+      "id": "upgrade_damage_recycler",
+      "category": "equipment",
+      "en": "Leech",
+      "zh": "赤蟥"
+    },
+    {
+      "id": "upgrade_phantom_strike",
+      "category": "equipment",
+      "en": "Phantom Strike",
+      "zh": "幻影突袭"
+    },
+    {
+      "id": "upgrade_deflecting_armor",
+      "category": "equipment",
+      "en": "Plated Armor",
+      "zh": "铁板重甲"
+    },
+    {
+      "id": "upgrade_siphon_bullets",
+      "category": "equipment",
+      "en": "Siphon Bullets",
+      "zh": "虹吸弹"
+    },
+    {
+      "id": "upgrade_spellbreaker",
+      "category": "equipment",
+      "en": "Spellbreaker",
+      "zh": "破咒护符"
+    },
+    {
+      "id": "upgrade_unstoppable",
+      "category": "equipment",
+      "en": "Unstoppable",
+      "zh": "势不可挡",
+      "aliases": {
+        "en": [
+          "BKB"
+        ]
+      },
+      "keepAliases": [
+        "BKB"
+      ]
+    },
+    {
+      "id": "upgrade_surging_power",
+      "category": "equipment",
+      "en": "Vampiric Burst",
+      "zh": "疗愈爆发"
+    },
+    {
+      "id": "upgrade_absorbing_armor",
+      "category": "equipment",
+      "en": "Witchmail",
+      "zh": "巫师护甲"
+    },
+    {
+      "id": "upgrade_extra_charge",
+      "category": "equipment",
+      "en": "Extra Charge",
+      "zh": "额外充能"
+    },
+    {
+      "id": "upgrade_improved_spirit",
+      "category": "equipment",
+      "en": "Extra Spirit",
+      "zh": "灵力扩增"
+    },
+    {
+      "id": "upgrade_goose_egg",
+      "category": "equipment",
+      "en": "Golden Goose Egg",
+      "zh": "金鹅蛋"
+    },
+    {
+      "id": "upgrade_magic_burst",
+      "category": "equipment",
+      "en": "Mystic Burst",
+      "zh": "秘术爆发"
+    },
+    {
+      "id": "upgrade_magic_reach",
+      "category": "equipment",
+      "en": "Mystic Expansion",
+      "zh": "秘术扩张"
+    },
+    {
+      "id": "upgrade_mystic_regeneration",
+      "category": "equipment",
+      "en": "Mystic Regeneration",
+      "zh": "秘术愈疗"
+    },
+    {
+      "id": "upgrade_withering_whip",
+      "category": "equipment",
+      "en": "Rusted Barrel",
+      "zh": "锈蚀枪管"
+    },
+    {
+      "id": "upgrade_acolytes_glove",
+      "category": "equipment",
+      "en": "Spirit Strike",
+      "zh": "大伤元气"
+    },
+    {
+      "id": "upgrade_arcane_surge",
+      "category": "equipment",
+      "en": "Arcane Surge",
+      "zh": "秘法涌动"
+    },
+    {
+      "id": "upgrade_bullet_resist_shredder",
+      "category": "equipment",
+      "en": "Bullet Resist Shredder",
+      "zh": "粉碎护甲",
+      "aliases": {
+        "en": [
+          "BRS"
+        ]
+      }
+    },
+    {
+      "id": "upgrade_cold_front",
+      "category": "equipment",
+      "en": "Cold Front",
+      "zh": "冰天雪地"
+    },
+    {
+      "id": "upgrade_magic_tempo",
+      "category": "equipment",
+      "en": "Compress Cooldown",
+      "zh": "冷却压缩"
+    },
+    {
+      "id": "upgrade_arcane_extension",
+      "category": "equipment",
+      "en": "Duration Extender",
+      "zh": "余威回荡"
+    },
+    {
+      "id": "upgrade_soaring_spirit",
+      "category": "equipment",
+      "en": "Improved Spirit",
+      "zh": "灵力高涨"
+    },
+    {
+      "id": "upgrade_magic_slow",
+      "category": "equipment",
+      "en": "Mystic Slow",
+      "zh": "秘术缓速"
+    },
+    {
+      "id": "upgrade_magic_vulnerability",
+      "category": "equipment",
+      "en": "Mystic Vulnerability",
+      "zh": "秘术脆弱"
+    },
+    {
+      "id": "upgrade_quick_silver",
+      "category": "equipment",
+      "en": "Quicksilver Reload",
+      "zh": "魔力装填",
+      "aliases": {
+        "en": [
+          "QSR"
+        ]
+      }
+    },
+    {
+      "id": "upgrade_containment",
+      "category": "equipment",
+      "en": "Slowing Hex",
+      "zh": "减速魔咒"
+    },
+    {
+      "id": "upgrade_spirit_sap",
+      "category": "equipment",
+      "en": "Spirit Sap",
+      "zh": "元灵衰竭"
+    },
+    {
+      "id": "upgrade_suppressor",
+      "category": "equipment",
+      "en": "Suppressor",
+      "zh": "元灵压制"
+    },
+    {
+      "id": "upgrade_rupture",
+      "category": "equipment",
+      "en": "Decay",
+      "zh": "衰变"
+    },
+    {
+      "id": "upgrade_greater_withering_whip",
+      "category": "equipment",
+      "en": "Disarming Hex",
+      "zh": "缴械魔咒"
+    },
+    {
+      "id": "upgrade_tech_range",
+      "category": "equipment",
+      "en": "Greater Expansion",
+      "zh": "强效扩张"
+    },
+    {
+      "id": "upgrade_target_stun",
+      "category": "equipment",
+      "en": "Knockdown",
+      "zh": "天锤压顶"
+    },
+    {
+      "id": "upgrade_resonant_healing",
+      "category": "equipment",
+      "en": "Radiant Regeneration",
+      "zh": "容光焕发"
+    },
+    {
+      "id": "upgrade_rapid_recharge",
+      "category": "equipment",
+      "en": "Rapid Recharge",
+      "zh": "火速充能"
+    },
+    {
+      "id": "upgrade_targeted_silence",
+      "category": "equipment",
+      "en": "Silence Wave",
+      "zh": "沉默之潮"
+    },
+    {
+      "id": "upgrade_spirit_snatch",
+      "category": "equipment",
+      "en": "Spirit Snatch",
+      "zh": "元灵收割"
+    },
+    {
+      "id": "upgrade_cooldown_reduction",
+      "category": "equipment",
+      "en": "Superior Cooldown",
+      "zh": "超速冷却"
+    },
+    {
+      "id": "upgrade_imbued_duration_extender",
+      "category": "equipment",
+      "en": "Superior Duration",
+      "zh": "余威久久"
+    },
+    {
+      "id": "upgrade_magic_storm",
+      "category": "equipment",
+      "en": "Surge of Power",
+      "zh": "灵能涌动"
+    },
+    {
+      "id": "upgrade_magic_shock",
+      "category": "equipment",
+      "en": "Tankbuster",
+      "zh": "重装克星"
+    },
+    {
+      "id": "upgrade_tech_damage_pulse",
+      "category": "equipment",
+      "en": "Torment Pulse",
+      "zh": "痛苦脉冲"
+    },
+    {
+      "id": "upgrade_arctic_blast",
+      "category": "equipment",
+      "en": "Arctic Blast",
+      "zh": "极地冰暴"
+    },
+    {
+      "id": "upgrade_boundless_spirit",
+      "category": "equipment",
+      "en": "Boundless Spirit",
+      "zh": "灵力无边"
+    },
+    {
+      "id": "upgrade_glitch",
+      "category": "equipment",
+      "en": "Cursed Relic",
+      "zh": "天谴圣物"
+    },
+    {
+      "id": "upgrade_ability_power_shard",
+      "category": "equipment",
+      "en": "Echo Shard",
+      "zh": "回音碎片"
+    },
+    {
+      "id": "upgrade_escalating_exposure",
+      "category": "equipment",
+      "en": "Escalating Exposure",
+      "zh": "伤上加伤"
+    },
+    {
+      "id": "upgrade_self_bubble",
+      "category": "equipment",
+      "en": "Ethereal Shift",
+      "zh": "身躯虚化"
+    },
+    {
+      "id": "upgrade_focus_lens",
+      "category": "equipment",
+      "en": "Focus Lens",
+      "zh": "聚焦透镜"
+    },
+    {
+      "id": "upgrade_ultimate_burst",
+      "category": "equipment",
+      "en": "Lightning Scroll",
+      "zh": "雷鸣卷轴"
+    },
+    {
+      "id": "upgrade_magic_carpet",
+      "category": "equipment",
+      "en": "Magic Carpet",
+      "zh": "魔毯"
+    },
+    {
+      "id": "upgrade_ethereal_bullets",
+      "category": "equipment",
+      "en": "Mercurial Magnum",
+      "zh": "水银重弹"
+    },
+    {
+      "id": "upgrade_mystic_reverb",
+      "category": "equipment",
+      "en": "Mystic Reverb",
+      "zh": "秘术余波"
+    },
+    {
+      "id": "upgrade_ability_refresher",
+      "category": "equipment",
+      "en": "Refresher",
+      "zh": "刷新环"
+    },
+    {
+      "id": "upgrade_discord",
+      "category": "equipment",
+      "en": "Scourge",
+      "zh": "敌之灾患"
+    },
+    {
+      "id": "upgrade_spirit_burn",
+      "category": "equipment",
+      "en": "Spirit Burn",
+      "zh": "元灵燃烧"
+    },
+    {
+      "id": "upgrade_transcendent_cooldown",
+      "category": "equipment",
+      "en": "Transcendent Cooldown",
+      "zh": "超凡冷却"
+    },
+    {
+      "id": "upgrade_aoe_root",
+      "category": "equipment",
+      "en": "Vortex Web",
+      "zh": "雷织漩涡"
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "entries": [
+    {
+      "id": "actions.teamfight",
+      "category": "actions",
+      "en": "teamfight",
+      "zh": "打团",
+      "aliases": {
+        "en": [
+          "team fight"
+        ]
+      }
+    },
+    {
+      "id": "actions.push_tower",
+      "category": "actions",
+      "en": "push tower",
+      "zh": "推塔",
+      "aliases": {
+        "en": [
+          "take tower"
+        ]
+      }
+    },
+    {
+      "id": "actions.group_push",
+      "category": "actions",
+      "en": "group push",
+      "zh": "抱团推塔",
+      "aliases": {
+        "en": [
+          "push together"
+        ]
+      }
+    },
+    {
+      "id": "actions.split_push",
+      "category": "actions",
+      "en": "split push",
+      "zh": "分推",
+      "aliases": {
+        "en": [
+          "split pushing"
+        ],
+        "zh": [
+          "分开推塔"
+        ]
+      }
+    },
+    {
+      "id": "actions.group_up",
+      "category": "actions",
+      "en": "group up",
+      "zh": "集合"
+    },
+    {
+      "id": "actions.push_mid",
+      "category": "actions",
+      "en": "push mid",
+      "zh": "推中路"
+    },
+    {
+      "id": "actions.take_mid_boss",
+      "category": "actions",
+      "en": "take mid boss",
+      "zh": "打大龙",
+      "aliases": {
+        "en": [
+          "do mid boss",
+          "do mid"
+        ]
+      }
+    },
+    {
+      "id": "actions.take_rejuv",
+      "category": "actions",
+      "en": "take rejuv",
+      "zh": "拿复生石",
+      "aliases": {
+        "en": [
+          "get rejuv"
+        ]
+      }
+    },
+    {
+      "id": "actions.contest_urn",
+      "category": "actions",
+      "en": "contest urn",
+      "zh": "争灵瓮"
+    },
+    {
+      "id": "actions.take_rift",
+      "category": "actions",
+      "en": "take rift",
+      "zh": "拿裂隙"
+    },
+    {
+      "id": "actions.defend_base",
+      "category": "actions",
+      "en": "defend base",
+      "zh": "守基地"
+    },
+    {
+      "id": "actions.rotate",
+      "category": "actions",
+      "en": "rotate",
+      "zh": "转线"
+    },
+    {
+      "id": "actions.gank",
+      "category": "actions",
+      "en": "gank",
+      "zh": "抓人"
+    }
+  ]
+}

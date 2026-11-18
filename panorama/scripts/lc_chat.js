@@ -31,7 +31,7 @@
  *   - 实际发送 = poker 生产配方:input.text 就位 → $.DispatchEvent("CitadelChatInputSubmitted", input)
  *     (poker_chat_debug.js flushRequestedChat 同款;焦点用 DropInputFocus 交还,让原生
  *      onblur 属性链自己走 CitadelChatInputBlur)
- *   - 命令(/、!)、未启用、已是发送目标语言 → 原样放行;翻译 3s 不回 → 原文照发,绝不吞消息
+ *   - 命令(/、!)、未启用、已是发送目标语言 → 原样放行;发送前翻译失败重试 3 次,仍失败仅本地提醒
  *   - 发送目标语言 = cfg.outgoingTarget(设置面板下拉,默认 en);模式 cfg.outgoing
  *     (off/translation/bilingual,默认 off——与 v2 一致,要在 Esc 菜单打开)
 	 *
@@ -54,6 +54,8 @@
 	const PENDING_FILL_TTL = 5000; // 空行观察窗(ms),超时移除防空行永久占用
 	const SEEN_LIMIT = 500;
 	const CACHE_LIMIT = 300;
+	const HISTORY_LIMIT = 10;
+	const HISTORY_CHAR_BUDGET = 1000;
 	const RETRY_LIMIT = 2;         // 含首次
 	const RETRY_DELAY = 0.4;       // 秒
 	const REQ_WATCHDOG = 12;       // 客户端看门狗(秒):回调永不返回时释放槽
@@ -80,7 +82,9 @@
 	const HUD_TEXT_ID = "MessageText";
 	// 译文标签标记类:chat 树没有我们的 CSS(样式走内联),此类只作 resetRowModState 的识别标记
 	const TRANS_CLASS = "LCTTranslation";
-	const OUT_WATCHDOG = 7.0;      // 出站翻译超时后走原版发送流程。
+	const OUT_RETRIES = 3;         // 发送前翻译失败后额外重试次数
+	const OUT_RETRY_DELAY = 0.4;   // 秒
+	const OUT_WATCHDOG = 50.0;    // 单次请求:协议队列 30s + 内部超时重试 16s + 余量
 	const OUT_MAX_SEND = 400;      // v2 同款发送长度保护(游戏聊天有上限,拼接过长被截/失败)
 	const CJK_RE = /[\u3400-\u4dbf\u4e00-\u9fff]/; // 汉字(中日共用,日文靠假名信号区分)
 	const RE_KANA = /[\u3040-\u30ff]/;             // 假名 —— 日文铁证(中文没有假名)
@@ -215,6 +219,32 @@
 
 	function reportChat(event) {
 		try { globalThis.LCTBridge.reportChat(event); } catch (e) {}
+	}
+
+	function rememberOriginal(direction, text) {
+		const original = String(text || "").trim();
+		if (!original || original.length > 400) return;
+		State.history.push({ direction: direction, text: original });
+		while (State.history.length > HISTORY_LIMIT) State.history.shift();
+	}
+
+	function recentHistory() {
+		const recent = [];
+		let length = 0;
+		for (let i = State.history.length - 1; i >= 0; i -= 1) {
+			const item = State.history[i];
+			if (length + item.text.length > HISTORY_CHAR_BUDGET) break;
+			recent.unshift(item);
+			length += item.text.length;
+		}
+		return recent;
+	}
+
+	function clearChatSession() {
+		State.history.length = 0;
+		State.seen.clear();
+		State.seenContext.clear();
+		State.cache.clear();
 	}
 
 	function reportIncoming(record, translation = "", status = "untranslated") {
@@ -470,8 +500,11 @@
 
 	/* ---------- 翻译队列(单在飞槽,与协议侧单槽串行对齐) ---------- */
 
-	function textKeyOf(translating) {
-		return String(translating || "") + "\x00" + targetLanguage();
+	function textKeyOf(translating, history) {
+		const bridge = globalThis.LCTBridge;
+		const glossaryVersion = typeof bridge.getGlossaryVersion === "function" ? bridge.getGlossaryVersion() : 0;
+		return String(translating || "") + "\x00" + targetLanguage() + "\x00" + glossaryVersion +
+			"\x00" + hashString(JSON.stringify(history || []));
 	}
 
 	function trimCache() {
@@ -487,11 +520,12 @@
 			const first = State.seen.values().next().value;
 			if (first === undefined) break;
 			State.seen.delete(first);
+			State.seenContext.delete(first);
 		}
 	}
 
 	function restoreFromCache(row, sig, translating) {
-		const cached = State.cache.get(textKeyOf(translating));
+		const cached = State.cache.get(textKeyOf(translating, row.__lctHistory));
 		if (!cached) return false;
 		if (getTransLabel(row, sig)) return true;
 		injectTranslation(row, sig, cached);
@@ -533,6 +567,7 @@
 			for (let i = 0; i < group.rows.length; i += 1) {
 				const entry = group.rows[i];
 				try { State.seen.delete(entry.sig); } catch (e) {} // 允许同文新行重试
+				try { State.seenContext.delete(entry.sig); } catch (e) {}
 				if (isValid(entry.row) && entry.row.__lctSig === entry.sig) {
 					injectError(entry.row, entry.sig, String(err || "unknown_error"));
 				}
@@ -554,7 +589,7 @@
 		try {
 			bridge.translate(
 				[{ i: 0, t: job.text }],
-				{ target: targetLanguage(), source: detectSourceCode(job.text), mode: "incoming" },
+				{ target: targetLanguage(), source: detectSourceCode(job.text), mode: "incoming", history: job.group.history },
 				function (res) {
 					if (State.active !== job) return; // 迟到回调(看门狗已接管)
 					State.active = null;
@@ -589,8 +624,8 @@
 		}
 	}
 
-	function enqueue(row, sig, record, chat) {
-		const key = textKeyOf(record.text);
+	function enqueue(row, sig, record, chat, history) {
+		const key = textKeyOf(record.text, history);
 		// in-flight 合并:同 textKey 只发一次桥请求,结果扇出注入所有同文行
 		const existing = State.inflight.get(key);
 		if (existing) {
@@ -598,7 +633,7 @@
 			if (chat) existing.chats.push(chat);
 			return;
 		}
-		const group = { key: key, rows: [{ row: row, sig: sig }], chats: chat ? [chat] : [] };
+		const group = { key: key, rows: [{ row: row, sig: sig }], chats: chat ? [chat] : [], history: history };
 		State.inflight.set(key, group);
 		State.queue.push({ text: record.text, group: group, attempts: 0 });
 		if (State.queue.length > QUEUE_MAX) finishJobFailure(State.queue.shift(), "queue_full");
@@ -613,6 +648,7 @@
 		const messages = findChild(root, CHAT_MESSAGES_ID);
 		if (messages && messages !== State.messages) {
 			// 容器重建(对局切换/清理)→ 水位线归零
+			if (State.messages) clearChatSession();
 			State.messages = messages;
 			State.scannedCount = 0;
 		}
@@ -623,11 +659,11 @@
 		return isValid(State.messages) ? State.messages : null;
 	}
 
-	function processRange(messages, start, end) {
+	function processRange(messages, start, end, fromHud) {
 		let touched = false;
 		for (let i = Math.max(0, start); i < end; i += 1) {
 			try {
-				if (processRow(childAt(messages, i))) touched = true;
+				if (processRow(childAt(messages, i), fromHud)) touched = true;
 			} catch (e) {
 				log("processRow error: " + expErr(e));
 			}
@@ -635,8 +671,9 @@
 		return touched;
 	}
 
-	function processRow(row) {
+	function processRow(row, fromHud) {
 		if (!isValid(row)) return false;
+		row.__lctFromHud = !!fromHud;
 		const record = readMessageRow(row);
 		if (!record) {
 			// 气泡先建、文本延迟填充(6726 行为,用户肉眼可见)。只靠尾部补扫时,
@@ -666,18 +703,29 @@
 		}
 		row.__lctSig = sig;
 		row.__lctProcessed = true;
+		const previous = State.seenContext.get(sig);
+		const seen = !!previous && (fromHud ? !!previous.main && !previous.hud : !!previous.hud && !previous.main);
+		let history = seen ? previous.history : recentHistory();
+		if (fromHud && history.length && history[history.length - 1].direction === "incoming" &&
+			history[history.length - 1].text === record.text) {
+			history = history.slice(0, -1);
+		}
+		row.__lctHistory = history;
+		if (!record.isOwn && !fromHud) rememberOriginal("incoming", record.text);
 
 		const chat = record.isOwn || record.quick || record.channel === "hud" ? null : record;
-		const seen = State.seen.has(sig);
-		if (!seen) {
+		if (seen) {
+			previous[fromHud ? "hud" : "main"] = row;
+	} else {
 			State.seen.add(sig);
+			State.seenContext.set(sig, { history: history, main: fromHud ? null : row, hud: fromHud ? row : null });
 			trimSeen();
 		}
 		if (skip) {
 			reportIncoming(chat);
 			return false;
 		}
-		const key = textKeyOf(record.text);
+		const key = textKeyOf(record.text, history);
 		const cached = State.cache.get(key);
 		if (cached) {
 			if (!getTransLabel(row, sig)) injectTranslation(row, sig, cached);
@@ -690,7 +738,7 @@
 			else reportIncoming(chat);
 			return false;
 		}
-		enqueue(row, sig, record, chat);
+		enqueue(row, sig, record, chat, history);
 		return true;
 	}
 
@@ -707,7 +755,7 @@
 				expired.push(row);
 			} else {
 				try {
-					if (processRow(row)) touched = true;
+					if (processRow(row, row.__lctFromHud)) touched = true;
 				} catch (e) {}
 			}
 			k = keys.next();
@@ -755,9 +803,9 @@
 				if (count < scanned) State.hudScanned[i] = 0; // 容器清空/重建
 				let start = State.hudScanned[i] || 0;
 				if (start === 0 && count > BOOTSTRAP_TAIL) start = count - BOOTSTRAP_TAIL; // 首扫只扫尾部,不翻历史
-				touched = processRange(messages, start, count) || touched;
+				touched = processRange(messages, start, count, true) || touched;
 				// 低延迟:尾部补扫(气泡文本延迟填充)
-				touched = processRange(messages, Math.max(0, count - TAIL_RESCAN), count) || touched;
+				touched = processRange(messages, Math.max(0, count - TAIL_RESCAN), count, true) || touched;
 				State.hudScanned[i] = count;
 			} catch (e) {
 				// 单容器异常不中断整体(顶栏翻译不因个别面板异常停摆)
@@ -770,12 +818,16 @@
 	function scanOnce() {
 		const messages = resolveMessages();
 		if (!messages) {
+			if (State.messages) clearChatSession();
 			State.messages = null;
 			State.scannedCount = 0;
 			return false;
 		}
 		const count = childCount(messages);
-		if (count < State.scannedCount) State.scannedCount = 0; // 聊天清空/重建
+		if (count < State.scannedCount) {
+			clearChatSession();
+			State.scannedCount = 0;
+		}
 		let touched = false;
 		if (State.scannedCount === 0 && count > BOOTSTRAP_TAIL) {
 			touched = processRange(messages, count - BOOTSTRAP_TAIL, count) || touched;
@@ -819,7 +871,7 @@
 		try { $.DispatchEvent("DropInputFocus", input); } catch (e) {}
 	}
 
-	function showCommandTip(input, text) {
+	function showCommandTip(input, text, duration = 2.5) {
 		try {
 			const parent = input.GetParent();
 			let tip = findChild(parent, "LCTChatCommandTip");
@@ -836,7 +888,7 @@
 			tip.text = text;
 			tip.visible = true;
 			const seq = ++State.commandTipSeq;
-			$.Schedule(2.5, function () {
+			$.Schedule(duration, function () {
 				if (seq === State.commandTipSeq && isValid(tip)) tip.visible = false;
 			});
 		} catch (e) { log(text); }
@@ -858,8 +910,78 @@
 			dropFocus(input);
 		}
 		if (submitted) {
+			rememberOriginal("outgoing", original);
 			const sent = text === (translation || original) ? "" : text;
 			reportChat({ direction: "outgoing", original: original, translation: translation, sent: sent, status: status });
+		}
+	}
+
+	function failOutgoing(job, reason) {
+		if (job.done) return;
+		job.token += 1; // 作废当前尝试的迟到回调与看门狗
+		log("out translate failed (" + job.attempts + "/" + (OUT_RETRIES + 1) + "): " + snip(reason, 80));
+		if (job.attempts <= OUT_RETRIES) {
+			try { $.Schedule(OUT_RETRY_DELAY, function () { startOutgoingAttempt(job); }); }
+			catch (e) { startOutgoingAttempt(job); }
+			return;
+		}
+		job.done = true;
+		if (State.outPending.get(job.text) === job) State.outPending.delete(job.text);
+		const input = chatInput() || job.input;
+		if (isValid(input)) {
+			try { if (!String(input.text || "")) input.text = job.text; } catch (e) {}
+			showCommandTip(input, cfg().uiLang === "en"
+				? "⚠ Translation failed after 3 retries. Message not sent."
+				: "⚠ 翻译失败，已重试 3 次，消息未发送。", 6);
+		}
+	}
+
+	function startOutgoingAttempt(job) {
+		if (job.done) return;
+		job.attempts += 1;
+		const token = ++job.token;
+		try {
+			globalThis.LCTBridge.translate(
+				[{ i: 0, t: job.text }],
+				{ target: job.target, source: job.source, mode: "outgoing", history: job.history },
+				function (res) {
+					if (job.done || job.token !== token) return;
+					const items = res && res.items;
+					const tr = (res && res.ok && items && items.length &&
+						typeof items[0].t === "string") ? String(items[0].t).trim() : "";
+					if (!tr || tr === job.text) {
+						failOutgoing(job, res ? (res.ok ? (tr === job.text ? "unchanged" : "empty")
+							: String(res.code || "error")) : "no_response");
+						return;
+					}
+					job.done = true;
+					if (State.outPending.get(job.text) === job) State.outPending.delete(job.text);
+					let send = tr;
+					if (job.mode === "bilingual") send = job.text + " | " + tr;
+					if (send.length > OUT_MAX_SEND) {
+						if (job.mode === "bilingual") {
+							const budget = Math.max(0, OUT_MAX_SEND - job.text.length - 3);
+							send = job.text + " | " + (tr.length > budget ? tr.slice(0, budget) + "…" : tr);
+						} else {
+							send = send.slice(0, OUT_MAX_SEND) + "…";
+						}
+					}
+					log("out sent [" + job.mode + "]: " + snip(send, 80));
+					sendNow(job.text, send, tr, "translated");
+				}
+			);
+		} catch (e) {
+			if (job.token === token) failOutgoing(job, "throw:" + expErr(e));
+			return;
+		}
+		if (job.done || job.token !== token) return;
+		try {
+			$.Schedule(OUT_WATCHDOG, function () {
+				if (job.done || job.token !== token) return;
+				failOutgoing(job, "client_watchdog");
+			});
+		} catch (e) {
+			failOutgoing(job, "watchdog_schedule_failed");
 		}
 	}
 
@@ -904,66 +1026,18 @@
 			sendNow(trimmed); // 原样放行(input.text 已是原文,sendNow 只走派发+清理)
 			return;
 		}
-		// 同文本翻译中重复 Enter → 原样立即发(v2 2026-10-31 实车:吞消息更糟)
-		if (State.outPending === trimmed) {
-			log("out dedupe: same text pending -> verbatim");
-			sendNow(trimmed);
+		if (State.outPending.has(trimmed)) {
+			try { input.text = ""; } catch (e) {}
+			showCommandTip(input, c.uiLang === "en" ? "Translation in progress…" : "正在翻译，请稍候…");
 			return;
 		}
-		State.outPending = trimmed;
 		try { input.text = ""; } catch (e) {} // 立即清空:视觉反馈已捕获,防重复整条输入
-		const seq = (State.outSeq += 1);
 		const src = detectSourceCode(trimmed);
 		log("out request " + src + "->" + tgt + " (" + mode + "): " + snip(trimmed, 60));
-		try {
-			globalThis.LCTBridge.translate(
-				[{ i: 0, t: trimmed }],
-				{ target: tgt, source: src, mode: "outgoing" },
-				function (res) {
-					if (seq !== State.outSeq) return; // 看门狗已放行 / 更新提交已接管
-					State.outPending = null;
-					const items = res && res.items;
-					const tr = (res && res.ok && items && items.length &&
-						typeof items[0].t === "string") ? String(items[0].t).trim() : "";
-					if (!tr || tr === trimmed) {
-						// 翻译不可用/超时/未变:原文照发,绝不吞(v2 生产教训)。
-						// 日志三分:no_response=回调没来 / 错误码 / unchanged|empty=桥正常但没实质翻译
-						log("out unavailable (" + (res ? (res.ok ? (tr === trimmed ? "unchanged" : "empty")
-							: String(res.code || "error")) : "no_response") + ") -> original");
-						sendNow(trimmed, trimmed, "", tr === trimmed ? "untranslated" : "fallback");
-						return;
-					}
-					let send = tr;
-					if (mode === "bilingual") send = trimmed + " | " + tr;
-					if (send.length > OUT_MAX_SEND) {
-						if (mode === "bilingual") {
-							const budget = Math.max(0, OUT_MAX_SEND - trimmed.length - 3);
-							send = trimmed + " | " + (tr.length > budget ? tr.slice(0, budget) + "…" : tr);
-						} else {
-							send = send.slice(0, OUT_MAX_SEND) + "…";
-						}
-					}
-					log("out sent [" + mode + "]: " + snip(send, 80));
-					sendNow(trimmed, send, tr, "translated");
-				}
-			);
-		} catch (eT) {
-			if (seq === State.outSeq) { State.outPending = null; State.outSeq += 1; }
-			log("out translate throw: " + expErr(eT) + " -> original");
-			sendNow(trimmed, trimmed, "", "fallback");
-			return;
-		}
-		// 看门狗:聊天消息不能等协议 8s 超时+重试,3s 不回就原文放行
-		try {
-			$.Schedule(OUT_WATCHDOG, function () {
-				if (seq === State.outSeq && State.outPending === trimmed) {
-					State.outSeq += 1; // 迟到的翻译回调就此作废
-					State.outPending = null;
-					log("out watchdog " + OUT_WATCHDOG + "s -> original");
-					sendNow(trimmed, trimmed, "", "fallback");
-				}
-			});
-		} catch (eW) {}
+		const job = { text: trimmed, mode: mode, target: tgt, source: src, history: recentHistory(),
+			input: input, attempts: 0, token: 0, done: false };
+		State.outPending.set(trimmed, job);
+		startOutgoingAttempt(job);
 	}
 
 	// 挂钩维护:#ChatInput 面板就绪后 SetPanelEvent 接管 oninputsubmit;
@@ -1029,15 +1103,16 @@
 		scannedCount: 0,
 		bootLogged: false,
 		seen: new Set(),       // 已处理签名(行级去重)
+		seenContext: new Map(),// 同一条消息在聊天窗与 HUD 中共用上下文
 		cache: new Map(),      // textKey -> 译文显示文本
+		history: [],          // 最近收发原文，仅保留在本次游戏会话内
 		inflight: new Map(),   // textKey -> group(同文合并)
 		pendingFill: new Map(),// row -> 观察截止时间(空行文本延迟填充)
 		queue: [],             // 待翻译任务
 		active: null,          // 在飞任务(单槽)
 		hudMessages: [],       // HUD 顶栏聊天 #Messages 容器列表(Team1Chat/Team2Chat)
 		hudScanned: [],        // 每容器水位线(与 hudMessages 同步重建)
-		outPending: null,      // 出站:翻译中的原文(去重 + 看门狗判定)
-		outSeq: 0,             // 出站提交序号:看门狗放行/新提交后,迟到回调作废
+		outPending: new Map(), // 出站翻译任务,同文去重;每条消息独立重试
 		outInput: null,        // 已挂钩的 ChatInput 面板(UI 重建 → 重挂)
 		outHooked: false,
 		outHookWarned: false,

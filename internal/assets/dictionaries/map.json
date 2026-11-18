@@ -1,0 +1,140 @@
+{
+  "entries": [
+    {
+      "id": "map.mid",
+      "category": "map",
+      "en": "mid",
+      "zh": "中路"
+    },
+    {
+      "id": "map.york",
+      "category": "map",
+      "en": "York",
+      "zh": "约克",
+      "aliases": {
+        "en": [
+          "yellow lane"
+        ],
+        "zh": [
+          "黄线"
+        ]
+      }
+    },
+    {
+      "id": "map.broadway",
+      "category": "map",
+      "en": "Broadway",
+      "zh": "百老汇",
+      "aliases": {
+        "en": [
+          "blue lane"
+        ],
+        "zh": [
+          "蓝线"
+        ]
+      }
+    },
+    {
+      "id": "map.greenwich",
+      "category": "map",
+      "en": "Greenwich",
+      "zh": "格林威治",
+      "aliases": {
+        "en": [
+          "green lane"
+        ],
+        "zh": [
+          "绿线"
+        ]
+      }
+    },
+    {
+      "id": "map.base",
+      "category": "map",
+      "en": "base",
+      "zh": "基地"
+    },
+    {
+      "id": "map.bridge",
+      "category": "map",
+      "en": "bridge",
+      "zh": "桥"
+    },
+    {
+      "id": "map.bridge_buff",
+      "category": "map",
+      "en": "bridge buff",
+      "zh": "桥上增益",
+      "aliases": {
+        "en": [
+          "buff bridge"
+        ],
+        "zh": [
+          "buff桥"
+        ]
+      }
+    },
+    {
+      "id": "map.rejuvenator",
+      "category": "map",
+      "en": "Rejuvenator",
+      "zh": "复生石",
+      "aliases": {
+        "en": [
+          "rejuv"
+        ],
+        "zh": [
+          "复活石"
+        ]
+      }
+    },
+    {
+      "id": "map.soul_urn",
+      "category": "map",
+      "en": "Soul Urn",
+      "zh": "灵瓮",
+      "aliases": {
+        "en": [
+          "urn"
+        ],
+        "zh": [
+          "罐子"
+        ]
+      }
+    },
+    {
+      "id": "map.unstable_rift",
+      "category": "map",
+      "en": "Unstable Rift",
+      "zh": "不稳定裂隙",
+      "aliases": {
+        "en": [
+          "rift"
+        ],
+        "zh": [
+          "裂隙"
+        ]
+      }
+    },
+    {
+      "id": "map.jungle",
+      "category": "map",
+      "en": "jungle",
+      "zh": "野区"
+    },
+    {
+      "id": "map.curiosity_shop",
+      "category": "map",
+      "en": "Curiosity Shop",
+      "zh": "奇物商店",
+      "aliases": {
+        "en": [
+          "shop"
+        ],
+        "zh": [
+          "商店"
+        ]
+      }
+    }
+  ]
+}

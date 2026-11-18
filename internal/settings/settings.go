@@ -284,7 +284,7 @@ func (s *Store) commit(c Config, keys map[string]string) error {
 		if e != nil {
 			return e
 		}
-		if e = writeAtomic(newFile, protected); e != nil {
+		if e = WriteAtomic(newFile, protected); e != nil {
 			return e
 		}
 	}
@@ -293,7 +293,7 @@ func (s *Store) commit(c Config, keys map[string]string) error {
 	}
 	b, _ := json.MarshalIndent(c, "", "  ")
 	b = append(b, '\n')
-	err := writeAtomic(filepath.Join(s.dir, "settings.json"), b)
+	err := WriteAtomic(filepath.Join(s.dir, "settings.json"), b)
 	if err != nil {
 		if newFile != "" {
 			_ = os.Remove(newFile)
@@ -318,7 +318,9 @@ func credentialsChanged(c Config, previous Snapshot, keys map[string]string) boo
 	}
 	return false
 }
-func writeAtomic(path string, data []byte) error {
+
+// WriteAtomic replaces a state file after the new contents have been written to disk.
+func WriteAtomic(path string, data []byte) error {
 	f, e := os.CreateTemp(filepath.Dir(path), ".write-*")
 	if e != nil {
 		return e

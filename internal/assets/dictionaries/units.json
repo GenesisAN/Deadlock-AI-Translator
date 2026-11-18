@@ -1,0 +1,93 @@
+{
+  "entries": [
+    {
+      "id": "units.mid_boss",
+      "category": "units",
+      "en": "Mid-Boss",
+      "zh": "中区头目",
+      "aliases": {
+        "en": [
+          "mid boss",
+          "midboss"
+        ],
+        "zh": [
+          "大龙"
+        ]
+      }
+    },
+    {
+      "id": "units.small_haunt",
+      "category": "units",
+      "en": "Small Haunt",
+      "zh": "小野",
+      "aliases": {
+        "en": [
+          "small camp"
+        ]
+      }
+    },
+    {
+      "id": "units.medium_haunt",
+      "category": "units",
+      "en": "Medium Haunt",
+      "zh": "中野",
+      "aliases": {
+        "en": [
+          "medium camp"
+        ]
+      }
+    },
+    {
+      "id": "units.large_haunt",
+      "category": "units",
+      "en": "Large Haunt",
+      "zh": "大野",
+      "aliases": {
+        "en": [
+          "large camp"
+        ]
+      }
+    },
+    {
+      "id": "units.trooper",
+      "category": "units",
+      "en": "Trooper",
+      "zh": "步兵",
+      "aliases": {
+        "en": [
+          "troopers"
+        ]
+      }
+    },
+    {
+      "id": "units.guardian",
+      "category": "units",
+      "en": "Guardian",
+      "zh": "卫士"
+    },
+    {
+      "id": "units.walker",
+      "category": "units",
+      "en": "Walker",
+      "zh": "机甲"
+    },
+    {
+      "id": "units.base_guardian",
+      "category": "units",
+      "en": "Base Guardian",
+      "zh": "基地卫士"
+    },
+    {
+      "id": "units.shrine",
+      "category": "units",
+      "en": "Shrine",
+      "zh": "圣坛"
+    },
+    {
+      "id": "units.patron",
+      "category": "units",
+      "en": "Patron",
+      "zh": "守护神"
+    }
+  ]
+}

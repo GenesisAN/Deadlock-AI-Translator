@@ -1,0 +1,438 @@
+{
+  "entries": [
+    {
+      "id": "hero_atlas",
+      "category": "heroes",
+      "en": "Abrams",
+      "zh": "亚伯兰",
+      "aliases": {
+        "zh": [
+          "蓝牛",
+          "牛"
+        ]
+      }
+    },
+    {
+      "id": "hero_fencer",
+      "category": "heroes",
+      "en": "Apollo",
+      "zh": "阿波罗"
+    },
+    {
+      "id": "hero_baba",
+      "category": "heroes",
+      "en": "Baba",
+      "zh": "婆婆",
+      "aliases": {
+        "en": [
+          "Baba Yaga"
+        ]
+      }
+    },
+    {
+      "id": "hero_bebop",
+      "category": "heroes",
+      "en": "Bebop",
+      "zh": "比波普",
+      "aliases": {
+        "zh": [
+          "机器人"
+        ]
+      }
+    },
+    {
+      "id": "hero_punkgoat",
+      "category": "heroes",
+      "en": "Billy",
+      "zh": "比利",
+      "aliases": {
+        "zh": [
+          "羊"
+        ]
+      }
+    },
+    {
+      "id": "hero_nano",
+      "category": "heroes",
+      "en": "Calico",
+      "zh": "卡厉可"
+    },
+    {
+      "id": "hero_unicorn",
+      "category": "heroes",
+      "en": "Celeste",
+      "zh": "赛凌",
+      "aliases": {
+        "zh": [
+          "独角兽"
+        ]
+      }
+    },
+    {
+      "id": "hero_deadpack",
+      "category": "heroes",
+      "en": "Deadman Danny",
+      "zh": "空骨丹尼"
+    },
+    {
+      "id": "hero_drifter",
+      "category": "heroes",
+      "en": "Drifter",
+      "zh": "孤猎"
+    },
+    {
+      "id": "hero_dynamo",
+      "category": "heroes",
+      "en": "Dynamo",
+      "zh": "奇能",
+      "aliases": {
+        "zh": [
+          "谜团"
+        ]
+      }
+    },
+    {
+      "id": "hero_necro",
+      "category": "heroes",
+      "en": "Graves",
+      "zh": "格瑞墓"
+    },
+    {
+      "id": "hero_orion",
+      "category": "heroes",
+      "en": "Grey Talon",
+      "zh": "灰爪",
+      "aliases": {
+        "en": [
+          "GT"
+        ],
+        "zh": [
+          "老登"
+        ]
+      }
+    },
+    {
+      "id": "hero_haze",
+      "category": "heroes",
+      "en": "Haze",
+      "zh": "岚梦",
+      "aliases": {
+        "zh": [
+          "暗影"
+        ]
+      }
+    },
+    {
+      "id": "hero_astro",
+      "category": "heroes",
+      "en": "Holliday",
+      "zh": "哈雷黛"
+    },
+    {
+      "id": "hero_inferno",
+      "category": "heroes",
+      "en": "Infernus",
+      "zh": "炽焱",
+      "aliases": {
+        "zh": [
+          "火男"
+        ]
+      }
+    },
+    {
+      "id": "hero_tengu",
+      "category": "heroes",
+      "en": "Ivy",
+      "zh": "青藤",
+      "aliases": {
+        "zh": [
+          "石像鬼"
+        ]
+      }
+    },
+    {
+      "id": "hero_kelvin",
+      "category": "heroes",
+      "en": "Kelvin",
+      "zh": "开尔文",
+      "aliases": {
+        "zh": [
+          "冰男"
+        ]
+      }
+    },
+    {
+      "id": "hero_ghost",
+      "category": "heroes",
+      "en": "Lady Geist",
+      "zh": "盖斯特夫人"
+    },
+    {
+      "id": "hero_lash",
+      "category": "heroes",
+      "en": "Lash",
+      "zh": "劳什",
+      "aliases": {
+        "zh": [
+          "神鞭"
+        ]
+      }
+    },
+    {
+      "id": "hero_forge",
+      "category": "heroes",
+      "en": "McGinnis",
+      "zh": "麦金妮",
+      "aliases": {
+        "en": [
+          "McG"
+        ],
+        "zh": [
+          "炮台"
+        ]
+      }
+    },
+    {
+      "id": "hero_vampirebat",
+      "category": "heroes",
+      "en": "Mina",
+      "zh": "米娜",
+      "aliases": {
+        "zh": [
+          "哈基米娜"
+        ]
+      }
+    },
+    {
+      "id": "hero_mirage",
+      "category": "heroes",
+      "en": "Mirage",
+      "zh": "蜃景",
+      "aliases": {
+        "zh": [
+          "米垃圾"
+        ]
+      }
+    },
+    {
+      "id": "hero_krill",
+      "category": "heroes",
+      "en": "Mo & Krill",
+      "zh": "莫克双雄",
+      "aliases": {
+        "en": [
+          "Mo and Krill",
+          "M&K"
+        ],
+        "zh": [
+          "猪"
+        ]
+      }
+    },
+    {
+      "id": "hero_nurse",
+      "category": "heroes",
+      "en": "Nurse Harrow",
+      "zh": "亥芮护士",
+      "aliases": {
+        "zh": [
+          "护士"
+        ]
+      }
+    },
+    {
+      "id": "hero_bookworm",
+      "category": "heroes",
+      "en": "Paige",
+      "zh": "佩吉"
+    },
+    {
+      "id": "hero_chrono",
+      "category": "heroes",
+      "en": "Paradox",
+      "zh": "悖论",
+      "aliases": {
+        "en": [
+          "Para"
+        ]
+      }
+    },
+    {
+      "id": "hero_synth",
+      "category": "heroes",
+      "en": "Pocket",
+      "zh": "口袋",
+      "aliases": {
+        "zh": [
+          "提箱客",
+          "帕克"
+        ]
+      }
+    },
+    {
+      "id": "hero_ratking",
+      "category": "heroes",
+      "en": "Rat King",
+      "zh": "鼠王"
+    },
+    {
+      "id": "hero_familiar",
+      "category": "heroes",
+      "en": "Rem",
+      "zh": "雷姆"
+    },
+    {
+      "id": "hero_gigawatt",
+      "category": "heroes",
+      "en": "Seven",
+      "zh": "柒",
+      "aliases": {
+        "zh": [
+          "老七"
+        ]
+      }
+    },
+    {
+      "id": "hero_shiv",
+      "category": "heroes",
+      "en": "Shiv",
+      "zh": "希弗",
+      "aliases": {
+        "zh": [
+          "西弗"
+        ]
+      }
+    },
+    {
+      "id": "hero_werewolf",
+      "category": "heroes",
+      "en": "Silver",
+      "zh": "西尔芙",
+      "aliases": {
+        "zh": [
+          "狼女",
+          "狼"
+        ]
+      }
+    },
+    {
+      "id": "hero_magician",
+      "category": "heroes",
+      "en": "Sinclair",
+      "zh": "无双魔术师"
+    },
+    {
+      "id": "hero_chessmaster",
+      "category": "heroes",
+      "en": "Solomon",
+      "zh": "所罗门"
+    },
+    {
+      "id": "hero_doorman",
+      "category": "heroes",
+      "en": "The Doorman",
+      "zh": "门侍",
+      "aliases": {
+        "en": [
+          "Doorman"
+        ]
+      }
+    },
+    {
+      "id": "hero_priest",
+      "category": "heroes",
+      "en": "Venator",
+      "zh": "诛邪者",
+      "aliases": {
+        "zh": [
+          "神父"
+        ]
+      }
+    },
+    {
+      "id": "hero_frank",
+      "category": "heroes",
+      "en": "Victor",
+      "zh": "维克多",
+      "aliases": {
+        "zh": [
+          "僵尸"
+        ]
+      }
+    },
+    {
+      "id": "hero_hornet",
+      "category": "heroes",
+      "en": "Vindicta",
+      "zh": "薇妲",
+      "aliases": {
+        "zh": [
+          "飞天狙"
+        ]
+      }
+    },
+    {
+      "id": "hero_artist",
+      "category": "heroes",
+      "en": "Violet",
+      "zh": "阿紫"
+    },
+    {
+      "id": "hero_viscous",
+      "category": "heroes",
+      "en": "Viscous",
+      "zh": "魔液",
+      "aliases": {
+        "zh": [
+          "史莱姆"
+        ]
+      }
+    },
+    {
+      "id": "hero_viper",
+      "category": "heroes",
+      "en": "Vyper",
+      "zh": "蝰邪",
+      "aliases": {
+        "zh": [
+          "蛇"
+        ]
+      }
+    },
+    {
+      "id": "hero_warden",
+      "category": "heroes",
+      "en": "Warden",
+      "zh": "沃督",
+      "aliases": {
+        "zh": [
+          "保安",
+          "守望者"
+        ]
+      }
+    },
+    {
+      "id": "hero_wraith",
+      "category": "heroes",
+      "en": "Wraith",
+      "zh": "灵魅",
+      "aliases": {
+        "zh": [
+          "卡牌",
+          "卡牌姐"
+        ]
+      }
+    },
+    {
+      "id": "hero_yamato",
+      "category": "heroes",
+      "en": "Yamato",
+      "zh": "大和",
+      "aliases": {
+        "zh": [
+          "刀姐"
+        ]
+      }
+    }
+  ]
+}
